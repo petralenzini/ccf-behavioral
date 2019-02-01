@@ -1,0 +1,96 @@
+// Grouped by WUSTL "grouping"
+{
+  "toolbox": {
+    "source": "box",
+    "assessments": [
+      {
+        "grit01": {
+          "source_id"
+        }
+      }
+
+    ]
+  },
+  "visits": {
+    "source": "redcap",
+    "assessments": [
+      {
+        "fake_visit1": {
+          "source_id": "",
+          "nda_shortname": "fake_lsvisit_1001"
+        }
+      }
+    ]
+  }
+},
+
+// Grouped by NDA datatype
+{
+  "grit01": {
+    "nda": {
+      "name": "12-Item Grit Scale",
+      "shortname": "grit",
+      "version": "01",
+      "data_dictionary_uri": "https://ndar.nih.gov/api/datadictionary/grit01"
+    },
+    "ccf": {
+      "group": "toolbox",
+      "name": "Toolbox Battery",
+      "source": {
+        "type": "box",
+        "path": "api.box.com/api/directory/123466789",
+        "filepattern": "*_Toolbox_Aging*.csv"
+      },
+      "translator": {
+        "script": "./transform-toolbox.py",
+        "input_dir": "./csvs/box_downloads",
+        "output_dir": "./csvs/nda_uploads"
+      },
+    }
+  },
+  "fake01": {
+    "nda": {
+      "name": "Fake Redcap Assessemnt",
+      "shortname": "fake",
+      "version": "01",
+    },
+    "ccf": {
+      "group": "visits",
+      "source": {
+        "type": "redcap",
+        "path": "redcap.com/api/assessment/12345"
+      },
+      "translator": {
+        "script": "./transform-redcap-vists.py",
+        "input_dir": "./csvs/redcap_downloads",
+        "output_dir": "./csvs/nda_uploads"
+      },
+    }
+  }
+}
+// Accessed in Python
+//
+// datatypes["grit01"]["nda"]["name"]
+// --> "12-Item Grit Scale"
+// datatypes["grit01"]["ccf"]["translator"]["script"]
+// --> "./transform-toolbox.py"
+// datatypes["grit01"]["ccf"]["source"]["path"]
+// --> "api.box.com/api/directory/123466789"
+// datatypes["grit01"]["ccf"]["source"]["type"]
+// --> "box"
+
+
+// OR a flatter version
+{
+  "finsrs01": {
+    "group": "toolbox",
+    "nda_name": "12-Item Grit Scale",
+    "source": "box",
+    "source_id": "987654321",
+    "source_path": "https://api.box.com/api/directory/987654321",
+    "ccf_nda_translator": "./transform-toolbox.py"
+  },
+
+  "wppsiiv01": {
+  }
+}

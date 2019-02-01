@@ -1,0 +1,111 @@
+{
+  "ksads-VERSION": {
+    "nda": {
+      "name": "",
+      "shortname": "",
+      "version": "01",
+      "data_dictionary_uri": ""
+    },
+    "ccf": {
+      "group": "ksads",
+      "name": "KSADS",
+      "source": {
+        "type": "box",
+        "folders": ["api.box.com/api/directory/123466789", "api.box.com/api/directory/123466789"],
+        "filepattern": "*01.csv"
+      },
+      "translator": {
+        "script": "./transform-ksads.py",
+        "input_dir": "./csvs/box_downloads/ksads",
+        "output_dir": "./csvs/nda_uploads/ksads"
+      },
+    }
+  },
+  "wppsiiv01": {
+    "nda": {
+      "name": "",
+      "shortname": "wppsiiv",
+      "version": "01",
+      "data_dictionary_uri": "https://ndar.nih.gov/api/datadictionary/wppsiiv01"
+    },
+    "ccf": {
+      "group": "ksads",
+      "name": "ksads wppsiiv",
+      "source": {
+        "type": "box",
+        "folders": [
+          "api.box.com/api/directory/123466789",
+          "api.box.com/api/directory/123466789"
+        ],
+        "filepattern": "*01.csv"
+      },
+      "translator": {
+        "script": "./transform-ksads.py",
+        "input_dir": "./csvs/box_downloads/ksads",
+        "output_dir": "./csvs/nda_uploads/ksads"
+      },
+    }
+  },
+
+  "wisc_v01": {
+
+  },
+
+  "wais_iv_part101": {
+
+  },
+
+  "wais_iv_part201": {
+
+  },
+
+  "er4001": {
+
+  },
+
+  "deldisk01": {
+
+  },
+
+  "grit01": {
+    "nda": {
+      "name": "12-Item Grit Scale",
+      "shortname": "grit",
+      "version": "01",
+      "data_dictionary_uri": "https://ndar.nih.gov/api/datadictionary/grit01"
+    },
+    "ccf": {
+      "group": "toolbox",
+      "name": "Toolbox Battery",
+      "source": {
+        "type": "box",
+        "path": "api.box.com/api/directory/123466789",
+        "filepattern": "*_Toolbox_Aging*.csv"
+      },
+      "translator": {
+        "script": "./transform-toolbox.py",
+        "input_dir": "./csvs/box_downloads",
+        "output_dir": "./csvs/nda_uploads"
+      },
+    }
+  },
+  "fake01": {
+    "nda": {
+      "name": "Fake Redcap Assessemnt",
+      "shortname": "fake",
+      "version": "01",
+    },
+    "ccf": {
+      "group": "visits",
+      "source": {
+        "type": "redcap",
+        "path": "redcap.com/api/assessment/12345"
+      },
+      "translator": {
+        "script": "./transform-redcap-vists.py",
+        "input_dir": "./csvs/redcap_downloads",
+        "output_dir": "./csvs/nda_uploads"
+      },
+    }
+  }
+}

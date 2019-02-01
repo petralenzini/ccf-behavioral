@@ -1,0 +1,20 @@
+HCA:
+√ Participants should not have anything to report on Pegboard or Odor; we’re not doing those tests for that group.  If some of the ppl in that sheet have data for those tests, an error was made, so I’d need to look at those ppl.
+√ The negative affect summary score (8-12) is confusing me a bit, because clearly the Aging participants are not in that age range, if that, in fact, is an age range.  Is that a typo?
+
+HCD:
+We are missing the following data types from the emotion domain (because we have FF and CAT in the same group (parent v. participant), depending on age.
+Participant - (NOT PARENT REPORT)
+i.      Missing Positive Affect CAT 3-17 yrs old
+ii.     Missing General Life FF 8-12 years old
+iii.    Missing Sadness FF
+√ iv.     You have perceived hostility twice: nihtbx_hostil and nihtbx_perchostil; I think we only need one. 😉
+Parent Report
+√ i.      Missing Self-Efficacy Parent Report CAT
+ii.     Missing Sadness Parent Report CAT
+iii.    Missing Anger Parent Report FF
+
+For Both HCA and HCD:
+I do know, FOR NOW, we’re not planning to have fully-corrected scores because…well, long story; so, we’re not planning to get fully-corrected scores, and I think that will limit which composite scores we’re able to get as well. – THESE ARE GOING TO BE DEANNA QUESTIONS ABOUT WHETHER WE WANT TO KEEP THOSE COLUMNS IN THERE OR TAKE THEM OUT AND WHICH ONES.
+We’ll definitely want Deanna to say which summary scores to use (some may not have scores due to not having all test types in the domain (toolbox gave no flexibility in that regard)
+The Pain Intensity score is not in your list, and we likely will want to put that there somehow.  That stupid thing is in the assessment data (raw) file; not scored.  Yay toolbox.

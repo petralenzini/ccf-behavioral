@@ -1,0 +1,20 @@
+* KSADS
+- DONE Combine site level exports to 3 files (Intro, Screener, Supplement)
+- TODO Map export columns to NDA columns
+
+* Q-Interactive
+- DONE Transform participant level exports to 4 combined assessments
+- DONE Script to add individual files to combined file
+
+* Toolbox
+- DONE Combine participant level output into one file
+- DONE Transform combined file into HCA and HCD single row per subject
+- DONE Generate data dictionary for approval and modeling
+- DONE Validate subject labels with naming scheme
+- DONE Check that subject type (HCA/D) does not have incorrect test data
+- TODO Generate one large combined file with all
+
+* UPenn CNP
+- DONE Cindy will upload in a combined state
+- TODO Split into delay discounting and emotion
+- TODO Map output variables to NDA variables

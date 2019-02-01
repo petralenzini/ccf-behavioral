@@ -1,0 +1,23 @@
+* General Scripting Layout
+
+need getters from various sources
+. box
+. redcap
+
+combine for each ccf assessment group
+. used for Cindy to review and correct
+
+need converter for each nda datatype
+. e.g., monolitic toolbox -> specific tb battery
+. ? monolithic lookup table for our field name -> nda field name
+. ? OR use nda alias mechanism
+
+need GUID mapper
+. something that pulls in unused guid and maps to local id
+
+general uploader
+. csv should work standalone in desktop submission tool
+. eventually should handle available web services
+
+? main program that takes assessment name as input and does whole validation and submission
+. i.e., a release script

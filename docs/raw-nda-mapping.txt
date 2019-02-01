@@ -1,0 +1,58 @@
+Q Interactive --
+
+Title:            Wechsler Intelligence Scale for Children V
+NDA data dict:    https://ndar.nih.gov/data_structure.html?short_name=wisc_v01
+Box example:      https://wustl.app.box.com/file/257984593471
+Filename example: HCD0488965V1_12_3_2017HCPD Matrix Reasoning 6-16_scores.csv
+File pattern:     "*Matrix Reasoning 6-16_scores.csv"
+
+Title:            Wechsler Preschool and Primary Scale of Intelligence IV Edition
+NDA data dict:    https://ndar.nih.gov/data_structure.html?short_name=wppsiiv01
+Box example:      https://wustl.app.box.com/file/257985365019
+Filename example: HCD0813243V1_11_1_2017HCPD Matrix Reasoning 5_scores.csv
+File pattern:     "*Matrix Reasoning 5_scores.csv"
+
+Title:            Wechsler Adult Intelligence Scale Fourth Edition [part 1]
+NDA data dict:    https://ndar.nih.gov/data_structure.html?short_name=wais_iv_part101
+Box example:      https://wustl.app.box.com/file/257985385886
+Filename example: HCD0574049V1_11_20_2017HCPD Matrix Reasoning 17+_scores.csv
+File pattern:     "*Matrix Reasoning 17+_scores.csv"
+
+Title: Wechsler   Adult Intelligence Scale Fourth Edition [part 2]
+NDA data dict:    https://ndar.nih.gov/data_structure.html?short_name=wais_iv_part201
+Box example:
+Filename example:
+File pattern:
+
+Title:            Rey Auditory Verbal Learning Test
+NDA data dict:    https://ndar.nih.gov/data_structure.html?short_name=ravlt01
+Box example:      https://wustl.app.box.com/file/279205389617
+Filename example: HCA8623581V1_2_5_2018HCP-Aging_scores.csv
+File pattern:     "*HCP-Aging_scores.csv"
+
+
+UPenn CNP --
+
+(Both in same output file, all appearing to have different name/format across sites)
+
+Title:            Penn Emotion Recognition Task
+NDA data dict:    https://ndar.nih.gov/data_structure.html?short_name=er4001
+Box example:      https://wustl.app.box.com/file/258081700435
+Filename example: UCLA HCD CNP_2017_02_22.csv
+File pattern:     "*CNP*"
+
+Title:            Delay Discounting Task
+NDA data dict:    https://ndar.nih.gov/data_structure.html?short_name=deldisk01
+Box example:      https://wustl.app.box.com/file/257987045880
+Filename example: HCD_WU_UPennCNP_2018_02_22.xlsx
+File pattern:     "*CNP*"
+
+
+KSADS --
+
+???
+
+
+Toolbox --
+
+
