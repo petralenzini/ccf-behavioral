@@ -1,0 +1,10 @@
+datasetid,siteid,subid,assessment,subject,study,site,gender,interview_date,reason
+80723,HCPLWUST,HCA2662763,V2,HCA2662763,,,,,PatientID not in Redcap
+81028-81037,HCPLWUST,D1753559,V2,D1753559,,,,,PatientID not in Redcap
+59371,HCPMGH,HCA8435176,V1,,,,,,duplicated subid/assessment combination
+67549,HCPMINN,HCD1578365,V1,,,,,,duplicated subid/assessment combination
+77112,HCPMGH,HCA8435176,V1,,,,,,duplicated subid/assessment combination
+79605,HCPMINN,HCD1578365,V1,,,,,,duplicated subid/assessment combination
+61685,HCPMGH,HCA6848090,A1,,,,,,"visit number not in V1, V2, or V3"
+78595,HCPMINN,HCA8537992,,,,,,,"visit number not in V1, V2, or V3"
+80463,HCPMINN,HCA7288184,,,,,,,"visit number not in V1, V2, or V3"

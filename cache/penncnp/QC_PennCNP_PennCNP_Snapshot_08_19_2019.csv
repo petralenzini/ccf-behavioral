@@ -1,0 +1,8 @@
+datasetid,siteid,subid,assessment,subject,study,site,gender,interview_date,reason
+,,,,HCD2908870,hcpdchild,1,2,2019-08-03,Missing in Box
+,,,,HCD1099858,hcpdchild,1,1,2019-08-03,Missing in Box
+,,,,HCD0930954,hcpdchild,1,2,2019-08-10,Missing in Box
+,,,,HCA6794801,hcpa,2,2,2019-07-08,Missing in Box
+,,,,HCA8873908,hcpa,3,1,2019-05-03,Missing in Box
+,,,,HCD0753049,hcpd18,3,2,2019-07-31,Missing in Box
+80318,HCPMINN,HCA660671,V2,HCA660671,,,,,PatientID not in Redcap

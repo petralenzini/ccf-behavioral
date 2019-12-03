@@ -2,7 +2,7 @@ asn1crypto==0.24.0
 attrs==18.2.0
 boto3==1.9.86
 botocore==1.12.86
-boxsdk==1.5.5
+boxsdk==2.3.2
 certifi==2018.11.29
 cffi==1.11.5
 chardet==3.0.4
@@ -16,6 +16,7 @@ numpy==1.16.1
 openpyxl==2.5.14
 pandas==0.24.0
 pycparser==2.19
+pycurl==7.43.0.2
 PyJWT==1.7.1
 python-dateutil==2.7.5
 pytz==2018.9
@@ -26,3 +27,4 @@ six==1.12.0
 tqdm==4.30.0
 urllib3==1.24.1
 wrapt==1.11.1
+xlrd==1.2.0
