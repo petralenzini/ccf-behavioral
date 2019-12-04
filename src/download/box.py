@@ -560,6 +560,131 @@ class LifespanBox:
             studyids = studyids.append(uniqueids)
         return studyids
 
+    # use json format because otherwise commas in strings convert wrong in csv
+    # read
+    # , token=token[0],field=field[0],event=event[0]):
+    def getredcapfieldsjson(self, fieldlist, study='hcpdparent '):
+        """
+        Downloads requested fields from Redcap databases specified by details in redcapconfig file
+        Returns panda dataframe with fields 'study', 'Subject_ID, 'subject', and 'flagged', where 'Subject_ID' is the
+        patient id in the database of interest (sometimes called subject_id, parent_id) as well as requested fields.
+        subject is this same id stripped of underscores or flags like 'excluded' to make it easier to merge
+        flagged contains the extra characters other than the id so you can keep track of who should NOT be uploaded to NDA
+        or elsewwhere shared
+        """
+        auth = pd.read_csv(redcapconfigfile)
+        studydata = pd.DataFrame()
+        fieldlistlabel = [
+            'fields[' +
+            str(i) +
+            ']' for i in range(
+                5,
+                len(fieldlist) +
+                5)]
+        fieldrow = dict(zip(fieldlistlabel, fieldlist))
+        d1 = {'token': auth.loc[auth.study == study,
+                                'token'].values[0],
+              'content': 'record',
+              'format': 'json',
+              'type': 'flat',
+              'fields[0]': auth.loc[auth.study == study,
+                                    'field'].values[0],
+              'fields[1]': auth.loc[auth.study == study,
+                                    'interview_date'].values[0],
+              'fields[2]': auth.loc[auth.study == study,
+                                    'sexatbirth'].values[0],
+              'fields[3]': auth.loc[auth.study == study,
+                                    'sitenum'].values[0],
+              'fields[4]': auth.loc[auth.study == study,
+                                    'dobvar'].values[0]}
+        d2 = fieldrow
+        d3 = {'events[0]': auth.loc[auth.study == study,
+                                    'event'].values[0],
+              'rawOrLabel': 'raw',
+              'rawOrLabelHeaders': 'raw',
+              'exportCheckboxLabel': 'false',
+              'exportSurveyFields': 'false',
+              'exportDataAccessGroups': 'false',
+              'returnFormat': 'json'}
+        data = {**d1, **d2, **d3}
+        buf = BytesIO()
+        ch = pycurl.Curl()
+        ch.setopt(
+            ch.URL,
+            'https://redcap.wustl.edu/redcap/srvrs/prod_v3_1_0_001/redcap/api/')
+        ch.setopt(ch.HTTPPOST, list(data.items()))
+        ch.setopt(ch.WRITEDATA, buf)
+        ch.perform()
+        ch.close()
+        htmlString = buf.getvalue().decode('UTF-8')
+        buf.close()
+        d = json.loads(htmlString)
+        #parent_ids = pd.DataFrame(htmlString.splitlines(), columns=['row'])
+        #header = parent_ids.iloc[0]
+        #headerv2 = header.str.replace(auth.loc[auth.study == study, 'interview_date'].values[0], 'interview_date')
+        #headerv3 = headerv2.str.split(',')
+        #parent_ids.drop([0], inplace=True)
+        #pexpanded = pd.DataFrame(parent_ids.row.str.split(pat='\t').values.tolist(), columns=headerv3.values.tolist()[0])
+        pexpanded = pd.DataFrame(d)
+        pexpanded = pexpanded.loc[~(
+            pexpanded[auth.loc[auth.study == study, 'field'].values[0]] == '')]
+        new = pexpanded[auth.loc[auth.study == study,
+                                 'field'].values[0]].str.split("_", 1, expand=True)
+        pexpanded['subject'] = new[0].str.strip()
+        pexpanded['flagged'] = new[1].str.strip()
+        pexpanded['study'] = study  # auth.study[i]
+        studydata = pd.concat([studydata, pexpanded], axis=0, sort=True)
+        studydata = studydata.rename(columns={
+                                     auth.loc[auth.study == study, 'interview_date'].values[0]: 'interview_date'})
+        # Convert age in years to age in months
+        # note that dob is hardcoded var name here because all redcap databases use same variable name...sue me
+        # interview date, which was originally v1_date for hcpd, has been
+        # renamed in line above, headerv2
+        try:
+            studydata['nb_months'] = (
+                12 * (pd.to_datetime(studydata['interview_date']).dt.year - pd.to_datetime(studydata.dob).dt.year) +
+                (pd.to_datetime(studydata['interview_date']).dt.month - pd.to_datetime(studydata.dob).dt.month) +
+                (pd.to_datetime(studydata['interview_date']).dt.day - pd.to_datetime(studydata.dob).dt.day) / 31)
+            studydatasub = studydata.loc[studydata.nb_months.isnull()].copy()
+            studydatasuper = studydata.loc[~(
+                studydata.nb_months.isnull())].copy()
+            studydatasuper['nb_months'] = studydatasuper['nb_months'].apply(
+                np.floor).astype(int)
+            studydatasuper['nb_monthsPHI'] = studydatasuper['nb_months']
+            studydatasuper.loc[studydatasuper.nb_months >
+                               1080, 'nb_monthsPHI'] = 1200
+            studydata = pd.concat([studydatasub, studydatasuper], sort=True)
+            studydata = studydata.drop(
+                columns={'nb_months'}).rename(
+                columns={
+                    'nb_monthsPHI': 'interview_age'})
+        except BaseException:
+            pass
+        # convert gender to M/F string
+        try:
+            studydata.gender = studydata.gender.str.replace('1', 'M')
+            studydata.gender = studydata.gender.str.replace('2', 'F')
+        except BaseException:
+            print(study + ' has no variable named gender')
+        return studydata
+
+    # ,study,site,datatype,boxsnapshotfolderid,boxsnapshotQCfolderid):
+    def Box2dataframe(self, curated_fileid_start):
+        # get current best curated data from BOX (a csv with one header row)
+        # and read into pandas dataframe for QC
+        raw_fileid = curated_fileid_start
+        rawobject = box.download_file(raw_fileid)
+        data_path = os.path.join(cache_space, rawobject.get().name)
+        raw = pd.read_csv(
+            data_path,
+            header=0,
+            low_memory=False,
+            encoding='ISO-8859-1')
+        # raw['DateCreatedDatetime']=pd.to_datetime(raw.DateCreated).dt.round('min')
+        # raw['InstStartedDatetime']=pd.to_datetime(raw.InstStarted).dt.round('min')
+        # raw['InstEndedDatetime']=pd.to_datetime(raw.InstEnded).dt.round('min')
+        return raw
+
 
 if __name__ == '__main__':
     box = LifespanBox()
