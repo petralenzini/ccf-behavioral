@@ -13,18 +13,19 @@ from download.box import LifespanBox
 
 verbose = True
 
-root_cache='/data/intradb/tmp/box2nda_cache/'
+root_cache = '/data/intradb/tmp/box2nda_cache/'
 cache_space = os.path.join(root_cache, 'qinteractive')
-try: 
+try:
     os.mkdir(cache_space)
-except:
+except BaseException:
     print("cache already exists")
 
 root_store = '/home/shared/HCP/hcpinternal/ccf-nda-behavioral/store/'
-store_space = os.path.join(root_store, 'qinteractive') #this will be the place to save any snapshots on the nrg servers
-try: 
-    os.mkdir(store_space) #look for store space before creating it here
-except:
+# this will be the place to save any snapshots on the nrg servers
+store_space = os.path.join(root_store, 'qinteractive')
+try:
+    os.mkdir(store_space)  # look for store space before creating it here
+except BaseException:
     print("store already exists")
 
 

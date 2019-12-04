@@ -368,7 +368,7 @@ def nda_transform(project, parent=False):
 
         try:
             # See if we've reached the next subject
-            next_row_subject = df['PIN'].iloc[idx+1]
+            next_row_subject = df['PIN'].iloc[idx + 1]
         except IndexError:
             # We've reached the end of the CSV
             print('end of {}'.format(combined_path))

@@ -33,48 +33,27 @@ instrument_datatype_map = {
     "Cognition Total Composite Score v1.1": "cogcomp01",
     "Cognition Early Childhood Composite": "cogcomp01",
     "Cognition Early Childhood Composite v1.1": "cogcomp01",
-
     "NIH Toolbox Flanker Inhibitory Control and Attention Test Age 12+ v2.1": "flanker01",
-
     "NIH Toolbox Emotional Support FF Age 18+ v2.0": "tlbx_emsup01",
-
     "NIH Toolbox Empathic Behaviors Parent Report CAT Ages 3-12 v2.0": "tlbx_empbeh01",
-
     "NIH Toolbox Fear-Somatic Arousal FF Age 18+ v2.0": "tlbx_fearanx01",
-
     "NIH Toolbox Friendship FF Age 18+ v2.0": "tlbx_friend01",
-
     "NIH Toolbox Perceived Rejection FF Age 18+ v2.0": "tlbx_rej01",
-
     "NIH Toolbox Perceived Hostility FF Age 18+ v2.0": "tlbx_perhost01",
-
     "Psychological Well Being Summary (18+)": "tlbx_wellbeing01",
-
     "NIH Toolbox Sadness CAT Age 18+ v2.0": "tlbx_sadness01",
-
     "NIH Toolbox Self-Efficacy CAT Age 18+ v2.0": "self_effic01",
-
     "NIH Toolbox Social Withdrawal Parent Report FF Ages 3-12 v2.0": "tlbx_socwit01",
-
     "NIH Toolbox List Sorting Working Memory Test Age 7+ v2.1": "lswmt01",
-
     "NIH Toolbox Loneliness FF Ages 8-17 v2.0": "nihtlbxlone01",
     "NIH Toolbox Loneliness FF Age 18+ v2.0": "nihtlbxlone01",
-
     "NIH Toolbox Oral Reading Recognition Test Age 3+ v2.0": "orrt01",
-
     "NIH Toolbox Picture Vocabulary Test Age 3+ v2.0": "tpvt01",
-
     "": "tlbx_sensation01",
-
     "": "osdt01",
-
     "NIH Toolbox Pattern Comparison Processing Speed Test Ages 3 - 6 v2.1": "pcps01",
-
     "NIH Toolbox Perceived Stress FF Age 18+ v2.0": "pss01",
-
-    "NIH Toolbox Picture Sequence Memory Test Age 8+ Form A v2.1": "psm01"
-}
+    "NIH Toolbox Picture Sequence Memory Test Age 8+ Form A v2.1": "psm01"}
 
 instrument_prefix_map = {
     # Used in ABCD

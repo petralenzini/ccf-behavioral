@@ -5,7 +5,8 @@ from multiprocessing.dummy import Pool
 from boxsdk import JWTAuth, OAuth2, Client
 
 cur_dir = os.path.dirname(os.path.abspath(__file__))
-default_cache = "/data/intradb/tmp/box2nda_cache" #os.path.join('/', 'tmp', 'ccf-nda-cache')
+# os.path.join('/', 'tmp', 'ccf-nda-cache')
+default_cache = "/data/intradb/tmp/box2nda_cache"
 
 
 class LifespanBox:
@@ -19,15 +20,16 @@ class LifespanBox:
 
     def get_client(self):
         #private_key_path = '/Users/michael/.ssh/box_private_key.pem'
-        auth = JWTAuth.from_settings_file("/data/intradb/home/.boxApp/config.json")
-        #auth = JWTAuth(
+        auth = JWTAuth.from_settings_file(
+            "/data/intradb/home/.boxApp/config.json")
+        # auth = JWTAuth(
         #    client_id='6tbnbadnd39w9ni14qtudmr6i5awjyqh',
         #    client_secret='J78YrWpvwG9bAYlkgmcFK9BUkYX5L2ig',
         #    enterprise_id='280321',
         #    jwt_key_id='6nb80fdd',
         #    rsa_private_key_file_sys_path='/data/intradb/home/.ssh/box_private_key.pem',
         #    rsa_private_key_passphrase=b'e64f408b853a70f2f66a05944236dcf1'
-        #)
+        # )
 
         # access_token = auth.authenticate_instance()
         admin_client = Client(auth)
@@ -94,7 +96,14 @@ class LifespanBox:
 
         return files
 
-    def search(self, pattern, limit=100, maxresults=1000, exclude=None,ancestor_folders=None,file_extensions=None):
+    def search(
+            self,
+            pattern,
+            limit=100,
+            maxresults=1000,
+            exclude=None,
+            ancestor_folders=None,
+            file_extensions=None):
         """
         Extends box search to narrow down based on glob like pattern
         Exclusions can be specified as comma separated string, like 'Not,This'
@@ -115,7 +124,12 @@ class LifespanBox:
 #            offset += limit
 
         print('looking for "{}" ...'.format(pattern))
-        result = self.client.search().query(pattern, limit=limit, offset=offset, ancestor_folders=ancestor_folders,file_extensions=file_extensions)
+        result = self.client.search().query(
+            pattern,
+            limit=limit,
+            offset=offset,
+            ancestor_folders=ancestor_folders,
+            file_extensions=file_extensions)
         results.extend(result)
 
         matches = []

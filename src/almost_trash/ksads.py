@@ -1,18 +1,23 @@
-import os, datetime
+import os
+import datetime
 import csv
-import pycurl, io
+import pycurl
+import io
 import sys
 import shutil
 from openpyxl import load_workbook
 import pandas as pd
 from download.box import LifespanBox
 
-###this stuff needs to be put int a configuration file for defining a redcap object (like a box object)
-###...work in progress
-study=['hcdparent','hcdchild','hcd18','hca']
-token=['CCF4AEC4EFB874DAD5ED47FE8F3B13BB','9C1B8F67F9B83DD073EA5146B5BCC473','16247BDF6EFC2B9D1110F6EB939BAFEE','51660051D09C5F2D923839C099C02903']
-field=['parent_id','subject_id','subject_id','subject_id']
-event=['visit_1_arm_1','visit_1_arm_1','visit_arm_1','visit_1_arm_1']
+# this stuff needs to be put int a configuration file for defining a redcap object (like a box object)
+# ...work in progress
+study = ['hcdparent', 'hcdchild', 'hcd18', 'hca']
+token = ['CCF4AEC4EFB874DAD5ED47FE8F3B13BB',
+         '9C1B8F67F9B83DD073EA5146B5BCC473',
+         '16247BDF6EFC2B9D1110F6EB939BAFEE',
+         '51660051D09C5F2D923839C099C02903']
+field = ['parent_id', 'subject_id', 'subject_id', 'subject_id']
+event = ['visit_1_arm_1', 'visit_1_arm_1', 'visit_arm_1', 'visit_1_arm_1']
 ###
 
 
@@ -21,115 +26,140 @@ verbose = True
 snapshotdate = datetime.datetime.today().strftime('%m_%d_%Y')
 
 #root_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-root_cache='/data/intradb/tmp/box2nda_cache/'
-processed_file = '/home/shared/HCP/hcpinternal/ccf-nda-behavioral/store/processed-ksads_'+snapshotdate+'.txt'
+root_cache = '/data/intradb/tmp/box2nda_cache/'
+processed_file = '/home/shared/HCP/hcpinternal/ccf-nda-behavioral/store/processed-ksads_' + \
+    snapshotdate + '.txt'
 cache_space = os.path.join(root_cache, 'ksads')
 os.mkdir(cache_space)
 
 # behavioral_folder_id = 0
 behavioral_folder_id = '18445162758'
 box = LifespanBox(cache=cache_space)
-#study_folders=[18445153825,18445193428,18445162792,18445196396]
+# study_folders=[18445153825,18445193428,18445162792,18445196396]
 
-ksadscombinedfolderid=48203202724  #this is the KSADS folder under Export to NDA in box.
+# this is the KSADS folder under Export to NDA in box.
+ksadscombinedfolderid = 48203202724
 
-#download one of the indentical key files which contain the labels for all the numbered questions in KSADS
-keyfileid=box.search(pattern='*Key')
+# download one of the indentical key files which contain the labels for
+# all the numbered questions in KSADS
+keyfileid = box.search(pattern='*Key')
 box.download_file(keyfileid[0].id)
-qkey=keyfileid[0].name
-cachekeyfile=os.path.join(cache_space,qkey)
+qkey = keyfileid[0].name
+cachekeyfile = os.path.join(cache_space, qkey)
 
 assessments = {
     'Screener': {
         'pattern': '*KSADS*Screener',
         'combined_file_id': 286668148773,
-        'slim_id':449798152073,
-        'dict_id':450226557492,
-        'key_sheet':'Screener',
-        'cleanest_start':[454283175403,454284882682,453684700214,454297434412]
-    },
+        'slim_id': 449798152073,
+        'dict_id': 450226557492,
+        'key_sheet': 'Screener',
+        'cleanest_start': [
+            454283175403,
+            454284882682,
+            453684700214,
+            454297434412]},
     'Intro': {
         'pattern': '*KSADS*Intro',
         'combined_file_id': 286671795350,
-        'slim_id':449745327689,
-        'dict_id':450219939565,
-        'key_sheet':'intro',
-        'cleanest_start':[454298717674,454296659026,454312317521,453674050704]
-    },
+        'slim_id': 449745327689,
+        'dict_id': 450219939565,
+        'key_sheet': 'intro',
+        'cleanest_start': [
+            454298717674,
+            454296659026,
+            454312317521,
+            453674050704]},
     'Supplement': {
         'pattern': '*KSADS*Supplement',
         'combined_file_id': 286667260248,
-        'slim_id':449779011618,
-        'dict_id':450238563945,
-        'key_sheet':'Supplement',
-        'cleanest_start':[454300463325,454286370085,454289064237,453678285912]
-    }
-}
+        'slim_id': 449779011618,
+        'dict_id': 450238563945,
+        'key_sheet': 'Supplement',
+        'cleanest_start': [
+            454300463325,
+            454286370085,
+            454289064237,
+            453678285912]}}
+
 
 def main():
     for item in assessments:
         # Download output for each site
         pattern = assessments[item]['pattern']
-        results = box.search(pattern=pattern, exclude='Key,MRH',ancestor_folders=[box.client.folder(behavioral_folder_id)],
+        results = box.search(
+            pattern=pattern,
+            exclude='Key,MRH',
+            ancestor_folders=[
+                box.client.folder(behavioral_folder_id)],
             file_extensions=['xlsx'])
 
-        #to initialize the combined file, need to start somewhere
-        #...otherwise append will grab everything and not know which file id has been updated with clean info
-        site_files=assessments[item]['cleanest_start']
+        # to initialize the combined file, need to start somewhere
+        # ...otherwise append will grab everything and not know which file id has been updated with clean info
+        site_files = assessments[item]['cleanest_start']
 
         # Get all rows from all site output files for cleanest files
-        rows = get_all_rows(site_files) 
+        rows = get_all_rows(site_files)
 
         # Get combined file
         file_id = assessments[item]['combined_file_id']
         f = box.download_file(file_id)
         # print(f.get().name)
 
-        # Append rows to the downloaded combined file that don't already exist and upload back to Box
+        # Append rows to the downloaded combined file that don't already exist
+        # and upload back to Box
         append_new_data(rows, f)
 
-        #now look at all the other files matching the pattern and see if anything was omitted on accident (by file id reported in KSADS.net)
-        listids=[]
+        # now look at all the other files matching the pattern and see if
+        # anything was omitted on accident (by file id reported in KSADS.net)
+        listids = []
         for i in range(len(results)):
-            listids=listids+[int(results[i].id)]
+            listids = listids + [int(results[i].id)]
 
-        # Append any new found rows to the downloaded combined file that don't already exist and upload back to Box
+        # Append any new found rows to the downloaded combined file that don't
+        # already exist and upload back to Box
         rowsround2 = get_all_rows(listids)
         append_new_data(rowsround2, f)
 
-  
-        #the above only appends new rows based on dataset ID, but it doesnt account for any updates to existing rows (e.g. maybe some Patient ID typos were corrected and saved in newer datestamped version of files).
-        #next step will be to find these updates, and forward these to the combined file
-        #findupdates(base_id=454919381038,compare_id=454312317521) #this is a dummy comparison -- will output the following pandas dataframe 
-        #0       ID    PatientID_x         SiteName_x column_affected base_value      compare_value                basename                              comparename       base_id    compare_id
-        #3    21479            ccc  Harvard HCP Study       PatientID        ccc      HCD0848060_V1  testcheck4updates.xlsx  Harvard_HCPD KSADS Intro_2019May08.xlsx  454919381038  454312317521
-        #360  65662            bbb  Harvard HCP Study       PatientID        bbb      HCD2614247_V1  testcheck4updates.xlsx  Harvard_HCPD KSADS Intro_2019May08.xlsx  454919381038  454312317521
-        #10   21489  HCD2664161_V1             booger        SiteName     booger  Harvard HCP Study  testcheck4updates.xlsx  Harvard_HCPD KSADS Intro_2019May08.xlsx  454919381038  454312317521
-        #15   21497  HCD2643456_V1  Harvard HCP Study               7        yes                     testcheck4updates.xlsx  Harvard_HCPD KSADS Intro_2019May08.xlsx  454919381038  454312317521
+        # the above only appends new rows based on dataset ID, but it doesnt account for any updates to existing rows (e.g. maybe some Patient ID typos were corrected and saved in newer datestamped version of files).
+        # next step will be to find these updates, and forward these to the combined file
+        # findupdates(base_id=454919381038,compare_id=454312317521) #this is a dummy comparison -- will output the following pandas dataframe
+        # 0       ID    PatientID_x         SiteName_x column_affected base_value      compare_value                basename                              comparename       base_id    compare_id
+        # 3    21479            ccc  Harvard HCP Study       PatientID        ccc      HCD0848060_V1  testcheck4updates.xlsx  Harvard_HCPD KSADS Intro_2019May08.xlsx  454919381038  454312317521
+        # 360  65662            bbb  Harvard HCP Study       PatientID        bbb      HCD2614247_V1  testcheck4updates.xlsx  Harvard_HCPD KSADS Intro_2019May08.xlsx  454919381038  454312317521
+        # 10   21489  HCD2664161_V1             booger        SiteName     booger  Harvard HCP Study  testcheck4updates.xlsx  Harvard_HCPD KSADS Intro_2019May08.xlsx  454919381038  454312317521
+        # 15   21497  HCD2643456_V1  Harvard HCP Study               7
+        # yes                     testcheck4updates.xlsx  Harvard_HCPD KSADS
+        # Intro_2019May08.xlsx  454919381038  454312317521
 
+        # make updates to combined_file, if updates are not present
 
-        #make updates to combined_file, if updates are not present
+        # compare ids from combined file, with those in Redcap.
+        parents = getids(token=token[0], field=field[0], event=event[0])
+        kids = getids(token=token[1], field=field[1], event=event[1])
+        lateteens = getids(token=token[2], field=field[2], event=event[2])
+        hca = getids(token=token[3], field=field[3], event=event[3])
 
-        #compare ids from combined file, with those in Redcap.
-        parents=getids(token=token[0],field=field[0],event=event[0])
-        kids=getids(token=token[1],field=field[1],event=event[1])
-        lateteens=getids(token=token[2],field=field[2],event=event[2])
-        hca=getids(token=token[3],field=field[3],event=event[3])
+        # create list and remove exclusions
 
-        #create list and remove exclusions 
-
-        #now for NDA: remove columns that dont have any data and upload slim file to box
+        # now for NDA: remove columns that dont have any data and upload slim
+        # file to box
         slimhandle = assessments[item]['slim_id']
-        slimf = makeslim(f,slimhandle)
-    
-        #make a draft datadictionary from slim file and start comparing columns
-        makedatadict(slimf,assessments[item]['dict_id'],cachekeyfile,assessments[item]['key_sheet'])
+        slimf = makeslim(f, slimhandle)
+
+        # make a draft datadictionary from slim file and start comparing
+        # columns
+        makedatadict(
+            slimf,
+            assessments[item]['dict_id'],
+            cachekeyfile,
+            assessments[item]['key_sheet'])
 
     # Clean up cache space
     shutil.rmtree(box.cache)
 
 
-def getids(token=token[0],field=field[0],event=event[0]):
+def getids(token=token[0], field=field[0], event=event[0]):
     data = {
         'token': token,
         'content': 'record',
@@ -143,80 +173,88 @@ def getids(token=token[0],field=field[0],event=event[0]):
         'exportSurveyFields': 'false',
         'exportDataAccessGroups': 'false',
         'returnFormat': 'json'
-        }
+    }
     buf = io.BytesIO()
     ch = pycurl.Curl()
-    ch.setopt(ch.URL, 'https://redcap.wustl.edu/redcap/srvrs/prod_v3_1_0_001/redcap/api/')
+    ch.setopt(
+        ch.URL,
+        'https://redcap.wustl.edu/redcap/srvrs/prod_v3_1_0_001/redcap/api/')
     ch.setopt(ch.HTTPPOST, list(data.items()))
     ch.setopt(ch.WRITEDATA, buf)
     ch.perform()
     ch.close()
     htmlString = buf.getvalue().decode('UTF-8')
     buf.close()
-    parent_ids=pd.DataFrame(htmlString.splitlines(),columns=['Subject_ID'])
-    parent_ids=parent_ids.iloc[1:,]
-    parent_ids=parent_ids.loc[~(parent_ids.Subject_ID=='')]
-    uniqueids=pd.DataFrame(parent_ids.Subject_ID.unique(),columns=['Subject_ID'])
-    uniqueids['Subject_ID']=uniqueids.Subject_ID.str.strip('\'"')
-    new=uniqueids['Subject_ID'].str.split("_",1,expand=True)
-    uniqueids['subject']=new[0].str.strip()
-    uniqueids['flagged']=new[1].str.strip()
+    parent_ids = pd.DataFrame(htmlString.splitlines(), columns=['Subject_ID'])
+    parent_ids = parent_ids.iloc[1:, ]
+    parent_ids = parent_ids.loc[~(parent_ids.Subject_ID == '')]
+    uniqueids = pd.DataFrame(
+        parent_ids.Subject_ID.unique(),
+        columns=['Subject_ID'])
+    uniqueids['Subject_ID'] = uniqueids.Subject_ID.str.strip('\'"')
+    new = uniqueids['Subject_ID'].str.split("_", 1, expand=True)
+    uniqueids['subject'] = new[0].str.strip()
+    uniqueids['flagged'] = new[1].str.strip()
     return uniqueids
 
 
-def findupdates(base_id=454918321952,compare_id=454298717674):
+def findupdates(base_id=454918321952, compare_id=454298717674):
     """
     compare two files by dataset id for updates to other columns
     """
     fbase = box.download_file(base_id)
-    basecachefile=os.path.join(box.cache,fbase.get().name)
+    basecachefile = os.path.join(box.cache, fbase.get().name)
     wb_base = load_workbook(filename=basecachefile)
-    basequestionnaire = wb_base[wb_base.sheetnames[0]] 
-    fbaseraw=pd.DataFrame(basequestionnaire.values)
-    header=fbaseraw.iloc[0]
-    fbaseraw=fbaseraw[1:]
-    fbaseraw.columns=header
+    basequestionnaire = wb_base[wb_base.sheetnames[0]]
+    fbaseraw = pd.DataFrame(basequestionnaire.values)
+    header = fbaseraw.iloc[0]
+    fbaseraw = fbaseraw[1:]
+    fbaseraw.columns = header
     # now the file to compare
     fcompare = box.download_file(compare_id)
-    comparecachefile=os.path.join(box.cache,fcompare.get().name)
+    comparecachefile = os.path.join(box.cache, fcompare.get().name)
     wb_compare = load_workbook(filename=comparecachefile)
-    comparequestionnaire = wb_compare[wb_compare.sheetnames[0]] 
-    fcompareraw=pd.DataFrame(comparequestionnaire.values)
-    header=fcompareraw.iloc[0]
-    fcompareraw=fcompareraw[1:]
-    fcompareraw.columns=header
-    fjoined=pd.merge(fbaseraw,fcompareraw,on='ID',how='inner') 
-    #for all columns except the ID, compare...
-    updates=pd.DataFrame()
+    comparequestionnaire = wb_compare[wb_compare.sheetnames[0]]
+    fcompareraw = pd.DataFrame(comparequestionnaire.values)
+    header = fcompareraw.iloc[0]
+    fcompareraw = fcompareraw[1:]
+    fcompareraw.columns = header
+    fjoined = pd.merge(fbaseraw, fcompareraw, on='ID', how='inner')
+    # for all columns except the ID, compare...
+    updates = pd.DataFrame()
     for col in fbaseraw.columns:
-        if col=='ID':
+        if col == 'ID':
             pass
         else:
-            fjoined.loc[fjoined[str(col)+'_x']==None]=""
-            fjoined.loc[fjoined[str(col)+'_y']==None]=""
-            update=fjoined.loc[~(fjoined[str(col)+'_x']==fjoined[str(col)+'_y'])].copy()
+            fjoined.loc[fjoined[str(col) + '_x'] is None] = ""
+            fjoined.loc[fjoined[str(col) + '_y'] is None] = ""
+            update = fjoined.loc[~(
+                fjoined[str(col) + '_x'] == fjoined[str(col) + '_y'])].copy()
             if update.empty:
                 pass
             else:
-                update['column_affected']=str(col)
-                update['base_value']=fjoined[str(col)+'_x']
-                update['compare_value']=fjoined[str(col)+'_y']
-                updates=updates.append(update)
-    updates=updates[['ID','PatientID_x','SiteName_x','column_affected','base_value','compare_value']].copy()
-    updates.rename(columns={'PatientID_x':'PatientID_base','SiteName_x':'SiteName_base'})
-    updates['basename']=fbase.get().name
-    updates['comparename']=fcompare.get().name
-    updates['base_id']=base_id
-    updates['compare_id']=compare_id
+                update['column_affected'] = str(col)
+                update['base_value'] = fjoined[str(col) + '_x']
+                update['compare_value'] = fjoined[str(col) + '_y']
+                updates = updates.append(update)
+    updates = updates[['ID', 'PatientID_x', 'SiteName_x',
+                       'column_affected', 'base_value', 'compare_value']].copy()
+    updates.rename(
+        columns={
+            'PatientID_x': 'PatientID_base',
+            'SiteName_x': 'SiteName_base'})
+    updates['basename'] = fbase.get().name
+    updates['comparename'] = fcompare.get().name
+    updates['base_id'] = base_id
+    updates['compare_id'] = compare_id
     return updates
-
 
 
 def get_all_rows(sites):
     rows = []
     for site_file in sites:
         # Download file contents to cache
-        fh=box.download_file(site_file)#.id)
+        fh = box.download_file(site_file)  # .id)
         path = os.path.join(box.cache, fh.get().name)
         wb = load_workbook(filename=path)
         # print(wb.sheetnames)
@@ -242,7 +280,8 @@ def append_new_data(rows, combined_file):
     Add rows for ids that don't exist and upload to Box
     """
     # print(rows)
-    print(str(len(rows)) + ' rows found in old or new box files (may contain duplicates)')
+    print(str(len(rows)) +
+          ' rows found in old or new box files (may contain duplicates)')
     # combined_file_name = combined_file.get().name
     combined_file_path = os.path.join(box.cache, combined_file.get().name)
     # Get existing ids
@@ -278,67 +317,82 @@ def append_new_data(rows, combined_file):
     combined_file.update_contents(combined_file_path)
 
 
-def makeslim(f,slim_id):
+def makeslim(f, slim_id):
     """
     remove columns from cachecopy that have no data and upload slim file to box
     """
     slimf = box.download_file(slim_id)
 
-    cachefile=os.path.join(box.cache,f.get().name)
-    ksadsraw=pd.read_csv(cachefile,header=0,low_memory=False)
-    ksadsraw=ksadsraw.dropna(axis=1, how='all')
-    combined_fileout =  os.path.join(box.cache,f.get().name.split('.')[0]+'Slim.csv')
-    ksadsraw.to_csv(combined_fileout,index=False)
-   
-    #box.client.folder(str(ksadscombinedfolderid)).upload(fileout)
+    cachefile = os.path.join(box.cache, f.get().name)
+    ksadsraw = pd.read_csv(cachefile, header=0, low_memory=False)
+    ksadsraw = ksadsraw.dropna(axis=1, how='all')
+    combined_fileout = os.path.join(
+        box.cache, f.get().name.split('.')[0] + 'Slim.csv')
+    ksadsraw.to_csv(combined_fileout, index=False)
+
+    # box.client.folder(str(ksadscombinedfolderid)).upload(fileout)
     slimf.update_contents(combined_fileout)
 
     return slimf
 
-def makedatadict(slimf,dict_id,cachekeyfile,sheet):    
+
+def makedatadict(slimf, dict_id, cachekeyfile, sheet):
     """
     create datadictionary from csvfile and upload dictionary to box
     """
-    try: dictf=box.download_file(dict_id)
-    except: dictf=None
+    try:
+        dictf = box.download_file(dict_id)
+    except BaseException:
+        dictf = None
 
-    cachefile=os.path.join(box.cache,slimf.get().name.split('.')[0])
-    ksadsraw=pd.read_csv(cachefile+'.csv',header=0,low_memory=False)
+    cachefile = os.path.join(box.cache, slimf.get().name.split('.')[0])
+    ksadsraw = pd.read_csv(cachefile + '.csv', header=0, low_memory=False)
 
-    varvalues=pd.DataFrame(columns=['variable','values_or_example','numunique'])
-    varvalues['variable']=ksadsraw.columns
-    kcounts=ksadsraw.count().reset_index().rename(columns={'index':'variable',0:'num_nonmissing'})
-    varvalues=pd.merge(varvalues,kcounts,on='variable',how='inner')
+    varvalues = pd.DataFrame(
+        columns=[
+            'variable',
+            'values_or_example',
+            'numunique'])
+    varvalues['variable'] = ksadsraw.columns
+    kcounts = ksadsraw.count().reset_index().rename(
+        columns={'index': 'variable', 0: 'num_nonmissing'})
+    varvalues = pd.merge(varvalues, kcounts, on='variable', how='inner')
 
-    #create a data frame containing summary info of data in the ksadraw, e.g. variablse, their formats, values, ect.
+    # create a data frame containing summary info of data in the ksadraw, e.g.
+    # variablse, their formats, values, ect.
     for var in ksadsraw.columns:
-        row=ksadsraw.groupby(var).count().reset_index()[var]
-        varvalues.loc[varvalues.variable==var,'numunique']=len(row) #number of unique vars in this column
-        varvalues.loc[(varvalues.variable==var) & (varvalues.numunique<=10) & 
-            (varvalues.num_nonmissing>=10),'values_or_example']=''.join(str(ksadsraw[var].unique().tolist()))
-        varvalues.loc[(varvalues.variable==var) & (varvalues.numunique<=10) & 
-            (varvalues.num_nonmissing<10),'values_or_example']=ksadsraw[var].unique().tolist()[1]
-        varvalues.loc[(varvalues.variable==var) & (varvalues.numunique>10),'values_or_example']=ksadsraw[var].unique().tolist()[1]
+        row = ksadsraw.groupby(var).count().reset_index()[var]
+        varvalues.loc[varvalues.variable == var, 'numunique'] = len(
+            row)  # number of unique vars in this column
+        varvalues.loc[(varvalues.variable == var) & (varvalues.numunique <= 10) & (
+            varvalues.num_nonmissing >= 10), 'values_or_example'] = ''.join(str(ksadsraw[var].unique().tolist()))
+        varvalues.loc[(varvalues.variable == var) & (varvalues.numunique <= 10) & (
+            varvalues.num_nonmissing < 10), 'values_or_example'] = ksadsraw[var].unique().tolist()[1]
+        varvalues.loc[(varvalues.variable == var) & (varvalues.numunique > 10),
+                      'values_or_example'] = ksadsraw[var].unique().tolist()[1]
 
-    #capture labels for the vars in this assessment from the key
-    keyasrow=pd.read_excel(cachekeyfile,sheet_name=sheet,header=0)
-    varlabels=keyasrow.transpose().reset_index().rename(columns={'index':'variable',0:'question_label'})
-    varlabels['variable']=varlabels['variable'].apply(str)
+    # capture labels for the vars in this assessment from the key
+    keyasrow = pd.read_excel(cachekeyfile, sheet_name=sheet, header=0)
+    varlabels = keyasrow.transpose().reset_index().rename(
+        columns={'index': 'variable', 0: 'question_label'})
+    varlabels['variable'] = varlabels['variable'].apply(str)
 
+    # now merge labels for the informative variables from cache
+    varvalues2 = pd.merge(varvalues, varlabels, on='variable', how='left')
+    varvalues2 = varvalues2[['variable',
+                             'question_label',
+                             'values_or_example',
+                             'numunique',
+                             'num_nonmissing']].copy()
+    # push this back to box
 
-    #now merge labels for the informative variables from cache
-    varvalues2=pd.merge(varvalues,varlabels,on='variable',how='left')
-    varvalues2=varvalues2[['variable','question_label','values_or_example','numunique','num_nonmissing']].copy()
-    #push this back to box
+    fileoutdict = os.path.join(cache_space, cachefile + "_DataDictionary.csv")
+    varvalues2.to_csv(fileoutdict, index=False)
 
-    fileoutdict=os.path.join(cache_space,cachefile+"_DataDictionary.csv")
-    varvalues2.to_csv(fileoutdict,index=False)
-
-    if dictf==None:
+    if dictf is None:
         box.client.folder(str(ksadscombinedfolderid)).upload(fileoutdict)
     else:
         dictf.update_contents(fileoutdict)
-
 
 
 if __name__ == '__main__':

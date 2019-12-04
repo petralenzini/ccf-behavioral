@@ -36,11 +36,15 @@ class ClientConfiguration:
         self.config = configparser.ConfigParser()
         self.config.read(os.path.join(settings_path, "settings.cfg"))
         self.validation_api = self.config.get("Endpoints", "validation")
-        self.submission_package_api = self.config.get("Endpoints", "submission_package")
+        self.submission_package_api = self.config.get(
+            "Endpoints", "submission_package")
         self.submission_api = self.config.get("Endpoints", "submission")
-        self.validationtool_api = self.config.get("Endpoints", "validationtool")
-        self.validation_results = self.config.get("Files", "validation_results")
-        self.submission_packages = self.config.get("Files", "submission_packages")
+        self.validationtool_api = self.config.get(
+            "Endpoints", "validationtool")
+        self.validation_results = self.config.get(
+            "Files", "validation_results")
+        self.submission_packages = self.config.get(
+            "Files", "submission_packages")
         self.username = self.config.get("User", "username")
         self.password = self.config.get("User", "password")
         self.collection_id = None
@@ -54,7 +58,8 @@ class ClientConfiguration:
         if not config.username:
             self.username = input('Enter your NIMH Data Archives username:')
         if not config.password:
-            self.password = getpass.getpass('Enter your NIMH Data Archives password:')
+            self.password = getpass.getpass(
+                'Enter your NIMH Data Archives password:')
 
 
 class Validation:
@@ -78,15 +83,29 @@ class Validation:
         self.w = False
         if not self.config.validation_results:
             self.config.validation_results = 'NDAValidationResults'
-        self.validation_result_dir = os.path.join(os.path.expanduser('~'), self.config.validation_results)
+        self.validation_result_dir = os.path.join(
+            os.path.expanduser('~'), self.config.validation_results)
         if not os.path.exists(self.validation_result_dir):
             os.mkdir(self.validation_result_dir)
         if self.config.JSON:
-            self.log_file = os.path.join(self.validation_result_dir, 'validation_results_{}.json'.format(self.date))
+            self.log_file = os.path.join(
+                self.validation_result_dir,
+                'validation_results_{}.json'.format(
+                    self.date))
         else:
-            self.log_file = os.path.join(self.validation_result_dir, 'validation_results_{}.csv'.format(self.date))
+            self.log_file = os.path.join(
+                self.validation_result_dir,
+                'validation_results_{}.csv'.format(
+                    self.date))
 
-        self.field_names = ['FILE', 'ID', 'STATUS', 'EXPIRATION_DATE', 'ERRORS', 'MESSAGE', 'COUNT']
+        self.field_names = [
+            'FILE',
+            'ID',
+            'STATUS',
+            'EXPIRATION_DATE',
+            'ERRORS',
+            'MESSAGE',
+            'COUNT']
         self.validation_progress = None
 
     """
@@ -98,7 +117,11 @@ class Validation:
     def validate(self):
         print('\nValidating files...')
         # find out how many cpu in your computer to get max threads
-        self.validation_progress = tqdm(total=len(self.file_list), position=0, ascii=os.name == 'nt')
+        self.validation_progress = tqdm(
+            total=len(
+                self.file_list),
+            position=0,
+            ascii=os.name == 'nt')
         cpu_num = multiprocessing.cpu_count()
         if cpu_num > 1:
             cpu_num -= 1
@@ -139,7 +162,8 @@ class Validation:
             if response['warnings'] != {}:
                 self.w = True
             self.uuid.append(response['id'])
-            self.uuid_dict[response['id']] = {'file': file, 'errors': response['errors'] != {}}
+            self.uuid_dict[response['id']] = {
+                'file': file, 'errors': response['errors'] != {}}
 
     def output(self):
         if self.config.JSON:
@@ -165,10 +189,13 @@ class Validation:
             for (response, file) in self.responses:
                 file_name = self.uuid_dict[response['id']]['file']
                 if response['errors'] == {}:
-                    writer.writerow(
-                        {'FILE': file_name, 'ID': response['id'], 'STATUS': response['status'],
-                         'EXPIRATION_DATE': response['expiration_date'], 'ERRORS': 'None', 'MESSAGE': 'None',
-                         'COUNT': '0'})
+                    writer.writerow({'FILE': file_name,
+                                     'ID': response['id'],
+                                     'STATUS': response['status'],
+                                     'EXPIRATION_DATE': response['expiration_date'],
+                                     'ERRORS': 'None',
+                                     'MESSAGE': 'None',
+                                     'COUNT': '0'})
                 else:
                     for error, value in response['errors'].items():
                         m = {}
@@ -201,25 +228,37 @@ class Validation:
                     'Expiration Date': response['expiration_date'],
                     'Warnings': response['warnings']
                 })
-                new_path = ''.join([self.validation_result_dir, '/validation_warnings_', self.date, '.json'])
+                new_path = ''.join(
+                    [self.validation_result_dir, '/validation_warnings_', self.date, '.json'])
                 with open(new_path, 'w') as outfile:
                     json.dump(json_data, outfile)
         else:
-            new_path = ''.join([self.validation_result_dir, '/validation_warnings_', self.date, '.csv'])
+            new_path = ''.join([self.validation_result_dir,
+                                '/validation_warnings_', self.date, '.csv'])
             if sys.version_info[0] < 3:
                 csvfile = open(new_path, 'wb')
             else:
                 csvfile = open(new_path, 'w', newline='')
-            fieldnames = ['FILE', 'ID', 'STATUS', 'EXPIRATION_DATE', 'WARNINGS', 'MESSAGE', 'COUNT']
+            fieldnames = [
+                'FILE',
+                'ID',
+                'STATUS',
+                'EXPIRATION_DATE',
+                'WARNINGS',
+                'MESSAGE',
+                'COUNT']
             writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
             writer.writeheader()
             for (response, file) in self.responses:
                 file_name = self.uuid_dict[response['id']]['file']
                 if response['warnings'] == {}:
-                    writer.writerow(
-                        {'FILE': file_name, 'ID': response['id'], 'STATUS': response['status'],
-                         'EXPIRATION_DATE': response['expiration_date'], 'WARNINGS': 'None', 'MESSAGE': 'None',
-                         'COUNT': '0'})
+                    writer.writerow({'FILE': file_name,
+                                     'ID': response['id'],
+                                     'STATUS': response['status'],
+                                     'EXPIRATION_DATE': response['expiration_date'],
+                                     'WARNINGS': 'None',
+                                     'MESSAGE': 'None',
+                                     'COUNT': '0'})
                 else:
                     for warning, value in response['warnings'].items():
                         m = {}
@@ -263,7 +302,8 @@ class Validation:
                 for d in self.directory_list:
                     file_name = os.path.join(d, f)
                     if os.path.isfile(file_name):
-                        self.full_file_path[file] = (file_name, os.path.getsize(file_name))
+                        self.full_file_path[file] = (
+                            file_name, os.path.getsize(file_name))
                         no_match.remove(file)
                         break
 
@@ -273,7 +313,8 @@ class Validation:
             print(
                 '\nYou must make sure all associated files listed in your validation file'
                 ' are located in the specified directory. Please try again.')
-            retry = input('Press the "Enter" key to specify location(s) for files and try again:')
+            retry = input(
+                'Press the "Enter" key to specify location(s) for files and try again:')
             self.directory_list = retry.split(' ')
             self.file_search()
 
@@ -302,18 +343,22 @@ class Validation:
                 try:
                     file = open(file_name, 'rb')
                 except FileNotFoundError:
-                    print('This file does not exist in current directory:', file_name)
+                    print(
+                        'This file does not exist in current directory:',
+                        file_name)
                     sys.exit()
                 data = file.read()
                 response, session = api_request(self, "POST", self.api, data)
                 while response and not response['done']:
-                    response, session = api_request(self, "GET", "/".join([self.api, response['id']]), session=session)
+                    response, session = api_request(
+                        self, "GET", "/".join([self.api, response['id']]), session=session)
                     time.sleep(0.1)
                     polling += 1
                     if polling == 50:
                         polling = 0
                 if response:
-                    response, session = api_request(self, "GET", "/".join([self.api, response['id']]), session=session)
+                    response, session = api_request(
+                        self, "GET", "/".join([self.api, response['id']]), session=session)
                     self.result_queue.put((response, file_name))
                     self.progress_bar.update(n=1)
                 # Stop thread after adding validation response
@@ -340,7 +385,8 @@ class SubmissionPackage:
         if self.config.description:
             self.dataset_description = self.config.description
         else:
-            self.dataset_description = input('Enter description for the dataset submission:')
+            self.dataset_description = input(
+                'Enter description for the dataset submission:')
         self.package_info = dict
         self.download_links = []
         self.package_id = None
@@ -353,22 +399,21 @@ class SubmissionPackage:
         self.get_custom_endpoints()
         if not self.config.submission_packages:
             self.config.submission_packages = 'NDASubmissionPackages'
-        self.submission_packages_dir = os.path.join(os.path.expanduser('~'), config.submission_packages)
+        self.submission_packages_dir = os.path.join(
+            os.path.expanduser('~'), config.submission_packages)
         if not os.path.exists(self.submission_packages_dir):
             os.mkdir(self.submission_packages_dir)
 
     def get_collections(self):
-        collections, session = api_request(self,
-                                           "GET",
-                                           "/".join([self.validationtool_api, "user/collection"]))
+        collections, session = api_request(
+            self, "GET", "/".join([self.validationtool_api, "user/collection"]))
         if collections:
             for c in collections:
                 self.collections.update({c['id']: c['title']})
 
     def get_custom_endpoints(self):
-        endpoints, session = api_request(self,
-                                         "GET",
-                                         "/".join([self.validationtool_api, "user/customEndpoints"]))
+        endpoints, session = api_request(
+            self, "GET", "/".join([self.validationtool_api, "user/customEndpoints"]))
         if endpoints:
             for endpoint in endpoints:
                 self.endpoints.append(endpoint['title'])
@@ -377,14 +422,16 @@ class SubmissionPackage:
         if len(self.collections) > 0 or len(self.endpoints) > 0:
             user_input = None
             if self.config.collection_id and self.config.endpoint_title:
-                print('You selected both a collection and an alternate endpoint.\n'
-                      'These options are mutually exclusive, please specify only one.')
+                print(
+                    'You selected both a collection and an alternate endpoint.\n'
+                    'These options are mutually exclusive, please specify only one.')
             elif self.config.endpoint_title:
                 self.endpoint_title = self.config.endpoint_title
             elif self.config.collection_id:
                 self.collection_id = self.config.collection_id
             else:
-                user_input = input('\nEnter -c <collection ID> OR -a <alternate endpoint>:')
+                user_input = input(
+                    '\nEnter -c <collection ID> OR -a <alternate endpoint>:')
             while True:
                 if user_input:
                     try:
@@ -399,28 +446,37 @@ class SubmissionPackage:
                     except IndexError:
                         print('Do not leave this section blank.')
                 try:
-                    if self.collection_id and int(self.collection_id) in self.collections:
+                    if self.collection_id and int(
+                            self.collection_id) in self.collections:
                         break
                     elif self.endpoint_title in self.endpoints:
                         break
                     else:
                         print('Collection IDs:')
                         for k, v in self.collections.items():
-                            print('{}: {}'.format(k, v.encode('ascii', 'ignore')))
+                            print(
+                                '{}: {}'.format(
+                                    k, v.encode(
+                                        'ascii', 'ignore')))
                         print('\nAlternate Endpoints:')
                         for endpoint in self.endpoints:
                             print(endpoint.encode('ascii', 'ignore'))
-                        print('\nYou do not have access to submit to the collection or alternate upload location: {} '.
-                              format(self.collection_id or self.endpoint_title))
-                        user_input = input('\nEnter -c <collection ID> OR -a <alternate endpoint> from the list above:')
+                        print(
+                            '\nYou do not have access to submit to the collection or alternate upload location: {} '. format(
+                                self.collection_id or self.endpoint_title))
+                        user_input = input(
+                            '\nEnter -c <collection ID> OR -a <alternate endpoint> from the list above:')
                 except (AttributeError, ValueError, TypeError):
                     print(
                         'Error: Input must start with either a -c or -a and be an integer or string value, respectively.')
-                    user_input = input('\nEnter -c <collection ID> OR -a <alternate endpoint>:')
+                    user_input = input(
+                        '\nEnter -c <collection ID> OR -a <alternate endpoint>:')
         else:
-            exit_client(signal=signal.SIGINT,
-                        message='The user {} does not have permission to submit to any collections'
-                                ' or alternate upload locations.'.format(self.config.username))
+            exit_client(
+                signal=signal.SIGINT,
+                message='The user {} does not have permission to submit to any collections'
+                ' or alternate upload locations.'.format(
+                    self.config.username))
 
     def build_package(self):
         self.set_upload_destination()
@@ -440,33 +496,45 @@ class SubmissionPackage:
             try:
                 self.package_id = response['submission_package_uuid']
                 print('\n\nPackage Information:')
-                print('validation results: [{}]'.format(",".join(response['validation_results'])))
-                print('submission_package_uuid: {}'.format(str(response['submission_package_uuid'])))
+                print(
+                    'validation results: [{}]'.format(
+                        ",".join(
+                            response['validation_results'])))
+                print('submission_package_uuid: {}'.format(
+                    str(response['submission_package_uuid'])))
                 print('created date: {}'.format(str(response['created_date'])))
-                print('expiration date: {}'.format(str(response['expiration_date'])))
+                print('expiration date: {}'.format(
+                    str(response['expiration_date'])))
             except KeyError:
-                exit_client(signal=signal.SIGINT,
-                            message='There was an error creating your package.')
+                exit_client(
+                    signal=signal.SIGINT,
+                    message='There was an error creating your package.')
             polling = 0
             sys.stdout.write('Building Package')
             while response['package_info']['status'] == 'processing':
-                response, session = api_request(self, "GET", "/".join([self.api, self.package_id]), session=session)
+                response, session = api_request(
+                    self, "GET", "/".join([self.api, self.package_id]), session=session)
                 polling += 1
                 sys.stdout.write('.')
                 self.package_id = response['submission_package_uuid']
             if response['package_info']['status'] == 'complete':
-                for f in [f for f in response['files']
-                          if f['type'] in ('Submission Memento', 'Submission Data Package')]:
+                for f in [
+                    f for f in response['files'] if f['type'] in (
+                        'Submission Memento',
+                        'Submission Data Package')]:
                     for key, value in f['_links'].items():
                         for k, v in value.items():
-                            self.download_links.append((v, "/".join(f['path'].split('/')[4:])))
+                            self.download_links.append(
+                                (v, "/".join(f['path'].split('/')[4:])))
                 print('\nPackage finished building.\n')
             else:
-                exit_client(signal=signal.SIGINT,
-                            message='There was an error in building your package.')
+                exit_client(
+                    signal=signal.SIGINT,
+                    message='There was an error in building your package.')
         else:
-            exit_client(signal=signal.SIGINT,
-                        message='There was an error with your package request.')
+            exit_client(
+                signal=signal.SIGINT,
+                message='There was an error with your package request.')
 
     def download_package(self):
         print('Downloading submission package.')
@@ -476,7 +544,12 @@ class SubmissionPackage:
         session = requests.session()
         total_package_size = 0
         for i, (url, file_name) in enumerate(self.download_links):
-            r = session.get(url, auth=(self.username, self.password), stream=True)
+            r = session.get(
+                url,
+                auth=(
+                    self.username,
+                    self.password),
+                stream=True)
             size = r.headers['content-length']
             total_package_size += int(size)
             self.download_links[i] = (url, file_name, int(size))
@@ -487,14 +560,21 @@ class SubmissionPackage:
                                 desc="Submission Package Download",
                                 ascii=os.name == 'nt')
         for url, file_name, size in self.download_links:
-            new_path = os.path.join(os.path.expanduser('~'), self.config.submission_packages)
+            new_path = os.path.join(
+                os.path.expanduser('~'),
+                self.config.submission_packages)
             path = os.path.join(new_path, self.package_folder)
             if not os.path.exists(path):
                 os.mkdir(path)
             file_name = file_name.split('/')
             file_name = file_name[1]
             file = os.path.join(path, file_name)
-            r = session.get(url, auth=(self.username, self.password), stream=True)
+            r = session.get(
+                url,
+                auth=(
+                    self.username,
+                    self.password),
+                stream=True)
             with open(file, 'wb') as out_file:
                 for chunk in r.iter_content(chunk_size=1024 * 1024):
                     if chunk:
@@ -502,7 +582,9 @@ class SubmissionPackage:
                         package_download.update(sys.getsizeof(chunk))
             session.close()
         if package_download.total > package_download.n:
-            package_download.update(package_download.total - package_download.n)
+            package_download.update(
+                package_download.total -
+                package_download.n)
         package_download.close()
 
 
@@ -534,7 +616,8 @@ class Submission:
 
     def submit(self):
         print('Requesting submission for package: {}'.format(self.package_id))
-        response, session = api_request(self, "POST", "/".join([self.api, self.package_id]))
+        response, session = api_request(
+            self, "POST", "/".join([self.api, self.package_id]))
         if response:
             self.status = response['submission_status']
             self.submission_id = response['submission_id']
@@ -544,16 +627,20 @@ class Submission:
                         message='There was an error creating your submission.')
 
     def check_status(self):
-        response, session = api_request(self, "GET", "/".join([self.api, self.submission_id]))
+        response, session = api_request(
+            self, "GET", "/".join([self.api, self.submission_id]))
         if response:
             self.status = response['submission_status']
         else:
-            exit_client(signal=signal.SIGINT,
-                        message='An error occurred while checking submission {} status.'.format(self.submission_id))
+            exit_client(
+                signal=signal.SIGINT,
+                message='An error occurred while checking submission {} status.'.format(
+                    self.submission_id))
 
     @property
     def incomplete_files(self):
-        response, session = api_request(self, "GET", "/".join([self.api, self.submission_id, 'files']))
+        response, session = api_request(
+            self, "GET", "/".join([self.api, self.submission_id, 'files']))
         self.full_file_path = {}
         self.associated_files = []
         if response:
@@ -562,8 +649,9 @@ class Submission:
                     self.associated_files.append(file['file_user_path'])
             return len(self.associated_files) > 0
         else:
-            exit_client(signal=signal.SIGINT,
-                        message='There was an error requesting files for submission {}.'.format(submission_id))
+            exit_client(
+                signal=signal.SIGINT,
+                message='There was an error requesting files for submission {}.'.format(submission_id))
 
     @property
     def found_all_local_files(self):
@@ -582,15 +670,17 @@ class Submission:
             for d in self.directory_list:
                 file_name = os.path.join(d, f)
                 if os.path.isfile(file_name):
-                    self.full_file_path[file] = (file_name, os.path.getsize(file_name))
+                    self.full_file_path[file] = (
+                        file_name, os.path.getsize(file_name))
                     no_match.remove(file)
                     break
         for file in no_match:
             print('Associated file not found in specified directory:', file)
         if no_match:
-            exit_client(signal.SIGINT, message=
-            '\nYou must make sure all associated files listed in your validation file'
-            ' are located in the specified directory. Please try again.')
+            exit_client(
+                signal.SIGINT,
+                message='\nYou must make sure all associated files listed in your validation file'
+                ' are located in the specified directory. Please try again.')
         return len(self.directory_list) > 0
 
     def submission_upload(self):
@@ -603,7 +693,8 @@ class Submission:
         for associated_file in self.full_file_path:
             path, file_size = self.full_file_path[associated_file]
             self.total_upload_size += file_size
-        response, session = api_request(self, "GET", "/".join([self.api, self.submission_id, 'files']))
+        response, session = api_request(
+            self, "GET", "/".join([self.api, self.submission_id, 'files']))
         if response:
             self.total_progress = tqdm(total=self.total_upload_size,
                                        position=0,
@@ -617,7 +708,8 @@ class Submission:
                 workers.append(worker)
                 worker.daemon = True
                 worker.start()
-            # check status for files that are not yet complete -- associated files
+            # check status for files that are not yet complete -- associated
+            # files
             for file in response:
                 if file['status'] != 'Complete':
                     self.upload_queue.put(file)
@@ -628,13 +720,15 @@ class Submission:
                     self.total_progress.update(progress)
                 time.sleep(0.1)
             if self.total_progress.n < self.total_progress.total:
-                self.total_progress.update(self.total_progress.total - self.total_progress.n)
+                self.total_progress.update(
+                    self.total_progress.total - self.total_progress.n)
             self.total_progress.close()
             session = None
 
         else:
-            exit_client(signal=signal.SIGINT,
-                        message='There was an error requesting submission {}.'.format(submission_id))
+            exit_client(
+                signal=signal.SIGINT,
+                message='There was an error requesting submission {}.'.format(submission_id))
         print('\nUploads complete.')
         print('Checking Submission Status.')
         self.check_status()
@@ -645,17 +739,20 @@ class Submission:
                     self.check_status()
                     sys.stdout.write('.')
                 if self.status == 'Uploading':
-                    exit_client(signal=signal.SIGINT,
-                                message='Timed out while waiting for submission status to change.\n'
-                                        'You may try again by resuming the submission: '
-                                        'python nda-validationtool-client.py -r {}\n'.format(self.submission_id))
+                    exit_client(
+                        signal=signal.SIGINT,
+                        message='Timed out while waiting for submission status to change.\n'
+                        'You may try again by resuming the submission: '
+                        'python nda-validationtool-client.py -r {}\n'.format(
+                            self.submission_id))
             else:
                 print('There was an error transferring some files, trying again')
                 if self.found_all_local_files and self.upload_tries < 5:
                     submission.submission_upload()
         if self.status != 'Uploading':
-            print('\nYou have successfully completed uploading files for submission {}!'.format(
-                self.submission_id))
+            print(
+                '\nYou have successfully completed uploading files for submission {}!'.format(
+                    self.submission_id))
             sys.exit(0)
 
     class S3Upload(threading.Thread):
@@ -716,16 +813,20 @@ class Submission:
                     s3 = session.client('s3')
                     s3_transfer = S3Transfer(s3)
                     tqdm.monitor_interval = 0
-                    s3_transfer.upload_file(full_path, bucket, key,
-                                            callback=self.UpdateProgress(self.progress_queue)
-                                            )
-                    api_request(self, "PUT", "/".
-                                join([self.api, self.submission_id, "files", file_id])
-                                + "?submissionFileStatus=Complete")
+                    s3_transfer.upload_file(
+                        full_path, bucket, key, callback=self.UpdateProgress(
+                            self.progress_queue))
+                    api_request(self,
+                                "PUT",
+                                "/". join([self.api,
+                                           self.submission_id,
+                                           "files",
+                                           file_id]) + "?submissionFileStatus=Complete")
                     self.progress_queue.put(None)
                 else:
-                    print('There was an error uploading {} after {} retry attempts'.format(full_path,
-                                                                                           self.upload_tries))
+                    print(
+                        'There was an error uploading {} after {} retry attempts'.format(
+                            full_path, self.upload_tries))
                     continue
                 self.upload_tries = 0
                 self.upload = None
@@ -735,53 +836,114 @@ class Submission:
 def parse_args():
     parser = argparse.ArgumentParser(
         description='This application allows you to validate files before submitting into NDAR. '
-                    'You must enter a list of at least one file to be validated. '
-                    'If your data also includes associated files, you must enter a list of at least one directory '
-                    'where the associated files are saved. Any files that are created while running the client '
-                    '(ie. results files) will be downloaded in your home directory under NDARValidationResults '
-                    'If your submission was interupted in the middle, '
-                    'you may resume your upload by entering a valid submission ID. ',
-        usage='%(prog)s <file_list>')
+        'You must enter a list of at least one file to be validated. '
+        'If your data also includes associated files, you must enter a list of at least one directory '
+        'where the associated files are saved. Any files that are created while running the client '
+        '(ie. results files) will be downloaded in your home directory under NDARValidationResults '
+        'If your submission was interupted in the middle, '
+        'you may resume your upload by entering a valid submission ID. ', usage='%(prog)s <file_list>')
 
-    parser.add_argument('files', metavar='<file_list>', type=str, nargs='+', action='store',
-                        help='Returns validation results for list of files')
+    parser.add_argument(
+        'files',
+        metavar='<file_list>',
+        type=str,
+        nargs='+',
+        action='store',
+        help='Returns validation results for list of files')
 
-    parser.add_argument('-l', '--listDir', metavar='<directory_list>', type=str, nargs='+', action='store',
-                        help='Specifies the directories in which the associated files are located.')
+    parser.add_argument(
+        '-l',
+        '--listDir',
+        metavar='<directory_list>',
+        type=str,
+        nargs='+',
+        action='store',
+        help='Specifies the directories in which the associated files are located.')
 
     parser.add_argument('-w', '--warning', action='store_true',
                         help='Returns validation warnings for list of files')
 
-    parser.add_argument('-a', '--alternateEndpoint', metavar='<arg>', type=str, nargs=1, action='store',
-                        help='An alternate upload location for the submission package')
+    parser.add_argument(
+        '-a',
+        '--alternateEndpoint',
+        metavar='<arg>',
+        type=str,
+        nargs=1,
+        action='store',
+        help='An alternate upload location for the submission package')
 
-    parser.add_argument('-b', '--buildPackage', action='store_true',
-                        help='Flag whether to construct the submission package')
+    parser.add_argument(
+        '-b',
+        '--buildPackage',
+        action='store_true',
+        help='Flag whether to construct the submission package')
 
-    parser.add_argument('-c', '--collectionID', metavar='<arg>', type=int, nargs=1, action='store',
-                        help='The NDA collection ID')
+    parser.add_argument(
+        '-c',
+        '--collectionID',
+        metavar='<arg>',
+        type=int,
+        nargs=1,
+        action='store',
+        help='The NDA collection ID')
 
-    parser.add_argument('-d', '--description', metavar='<arg>', type=str, nargs='+', action='store',
-                        help='The description of the submission')
+    parser.add_argument(
+        '-d',
+        '--description',
+        metavar='<arg>',
+        type=str,
+        nargs='+',
+        action='store',
+        help='The description of the submission')
 
-    parser.add_argument('-t', '--title', metavar='<arg>', type=str, nargs='+', action='store',
-                        help='The title of the submission')
+    parser.add_argument(
+        '-t',
+        '--title',
+        metavar='<arg>',
+        type=str,
+        nargs='+',
+        action='store',
+        help='The title of the submission')
 
-    parser.add_argument('-u', '--username', metavar='<arg>', type=str, nargs=1, action='store',
-                        help='NDA username')
+    parser.add_argument(
+        '-u',
+        '--username',
+        metavar='<arg>',
+        type=str,
+        nargs=1,
+        action='store',
+        help='NDA username')
 
-    parser.add_argument('-p', '--password', metavar='<arg>', type=str, nargs=1, action='store',
-                        help='NDA password')
+    parser.add_argument(
+        '-p',
+        '--password',
+        metavar='<arg>',
+        type=str,
+        nargs=1,
+        action='store',
+        help='NDA password')
 
-    parser.add_argument('-r', '--resume', action='store_true',
-                        help='Restart an in-progress submission, resuming from the last successful part in a multi-part'
-                             'upload. Must enter a valid submission ID.')
+    parser.add_argument(
+        '-r',
+        '--resume',
+        action='store_true',
+        help='Restart an in-progress submission, resuming from the last successful part in a multi-part'
+        'upload. Must enter a valid submission ID.')
 
-    parser.add_argument('-v', '--validationAPI', metavar='<arg>', type=str, nargs=1, action='store',
-                        help='URL of the validation tool API')
+    parser.add_argument(
+        '-v',
+        '--validationAPI',
+        metavar='<arg>',
+        type=str,
+        nargs=1,
+        action='store',
+        help='URL of the validation tool API')
 
-    parser.add_argument('-j', '--JSON', action='store_true',
-                        help='Flag whether to additionally download validation results in JSON format.')
+    parser.add_argument(
+        '-j',
+        '--JSON',
+        action='store_true',
+        help='Flag whether to additionally download validation results in JSON format.')
     args = parser.parse_args()
 
     return args
@@ -826,7 +988,8 @@ def api_request(api, verb, endpoint, data=None, session=None):
         auth = None
         headers.update({'content-type': 'text/csv'})
     else:
-        auth = requests.auth.HTTPBasicAuth(api.config.username, api.config.password)
+        auth = requests.auth.HTTPBasicAuth(
+            api.config.username, api.config.password)
         headers.update({'content-type': 'application/json'})
     if not session:
         session = requests.session()
@@ -834,11 +997,19 @@ def api_request(api, verb, endpoint, data=None, session=None):
     r = None
     response = None
     try:
-        r = session.send(requests.Request(verb, endpoint, headers, auth=auth, data=data).prepare(),
-                         timeout=300, stream=False)
+        r = session.send(
+            requests.Request(
+                verb,
+                endpoint,
+                headers,
+                auth=auth,
+                data=data).prepare(),
+            timeout=300,
+            stream=False)
     except requests.exceptions.RequestException as e:
-        print('\nAn error occurred while making {} request, check your endpoint configuration:\n'.
-              format(e.request.method))
+        print(
+            '\nAn error occurred while making {} request, check your endpoint configuration:\n'. format(
+                e.request.method))
         print(e)
         if api.__class__.__name__.endswith('Task'):
             api.shutdown_flag.set()
@@ -849,11 +1020,16 @@ def api_request(api, verb, endpoint, data=None, session=None):
         try:
             response = json.loads(r.text)
         except ValueError:
-            print('Your request returned an unexpected response, please check your endpoints.\n'
-                  'Action: {}\n'
-                  'Endpoint:{}\n'
-                  'Status:{}\n'
-                  'Reason:{}'.format(verb, endpoint, r.status_code, r.reason))
+            print(
+                'Your request returned an unexpected response, please check your endpoints.\n'
+                'Action: {}\n'
+                'Endpoint:{}\n'
+                'Status:{}\n'
+                'Reason:{}'.format(
+                    verb,
+                    endpoint,
+                    r.status_code,
+                    r.reason))
             if api.__class__.__name__.endswith('Task'):
                 api.shutdown_flag.set()
                 thread.interrupt_main()
@@ -866,8 +1042,15 @@ def api_request(api, verb, endpoint, data=None, session=None):
             username = input('Please enter your username:')
             password = getpass.getpass('Please enter your password:')
             auth = requests.auth.HTTPBasicAuth(username, password)
-            r = session.send(requests.Request(verb, endpoint, headers, auth=auth, data=data).prepare(),
-                             timeout=300, stream=False)
+            r = session.send(
+                requests.Request(
+                    verb,
+                    endpoint,
+                    headers,
+                    auth=auth,
+                    data=data).prepare(),
+                timeout=300,
+                stream=False)
             tries += 1
         if r.ok:
             response = json.loads(r.text)
@@ -877,7 +1060,9 @@ def api_request(api, verb, endpoint, data=None, session=None):
             api.password = password
             api.config.password = password
         else:
-            exit_client(signal.SIGINT, message='Too many unsuccessful authentication attempts.')
+            exit_client(
+                signal.SIGINT,
+                message='Too many unsuccessful authentication attempts.')
 
     print('response:')
     # print(response)
@@ -912,13 +1097,19 @@ if __name__ == "__main__":
 
     if args.resume:
         submission_id = args.files[0]
-        submission = Submission(id=submission_id, full_file_path=None, config=config, resume=True)
+        submission = Submission(
+            id=submission_id,
+            full_file_path=None,
+            config=config,
+            resume=True)
         submission.check_status()
         if submission.status == 'Uploading':
             if submission.incomplete_files and submission.found_all_local_files:
                 submission.submission_upload()
         else:
-            print('Submission Completed with status {}'.format(submission.status))
+            print(
+                'Submission Completed with status {}'.format(
+                    submission.status))
             sys.exit(0)
     else:
         validation = Validation(args.files, config=config)
@@ -928,29 +1119,38 @@ if __name__ == "__main__":
             validation.warnings()
         else:
             if validation.w:
-                print('\nNote: Your data has warnings. To save warnings, run again with -w argument.')
+                print(
+                    '\nNote: Your data has warnings. To save warnings, run again with -w argument.')
         print('\nAll files have finished validating.')
 
         # Test if no files passed validation, exit
-        if not any(map(lambda x: not validation.uuid_dict[x]['errors'], validation.uuid_dict)):
-            exit_client(signal=signal.SIGINT,
-                        message='No files passed validation, please correct any errors and validate again.')
+        if not any(
+                map(lambda x: not validation.uuid_dict[x]['errors'], validation.uuid_dict)):
+            exit_client(
+                signal=signal.SIGINT,
+                message='No files passed validation, please correct any errors and validate again.')
         # If some files passed validation, show files with and without errors
         else:
             print('\nThe following files passed validation:')
             for uuid in validation.uuid_dict:
                 if not validation.uuid_dict[uuid]['errors']:
-                    print('UUID {}: {}'.format(uuid, validation.uuid_dict[uuid]['file']))
+                    print(
+                        'UUID {}: {}'.format(
+                            uuid, validation.uuid_dict[uuid]['file']))
             if validation.e:
                 print('\nThese files contain errors:')
                 for uuid in validation.uuid_dict:
                     if validation.uuid_dict[uuid]['errors']:
-                        print('UUID {}: {}'.format(uuid, validation.uuid_dict[uuid]['file']))
-        # If some files had errors, give option to submit just the files that passed
+                        print(
+                            'UUID {}: {}'.format(
+                                uuid, validation.uuid_dict[uuid]['file']))
+        # If some files had errors, give option to submit just the files that
+        # passed
         if validation.e:
             while True:
-                proceed = input('Some files have errors, do you want to continue '
-                                'and submit ONLY the files that have passed validation? <Yes/No>: ')
+                proceed = input(
+                    'Some files have errors, do you want to continue '
+                    'and submit ONLY the files that have passed validation? <Yes/No>: ')
                 if str(proceed).lower() == 'no':
                     sys.exit()
                 elif str(proceed).lower() == 'yes':
@@ -960,21 +1160,30 @@ if __name__ == "__main__":
                             validation.uuid.append(uuid)
                     break
                 else:
-                    print('Your answer <{}> was not recognized, please enter yes or no.'.format(str(proceed)))
+                    print(
+                        'Your answer <{}> was not recognized, please enter yes or no.'.format(
+                            str(proceed)))
                     continue
         # If user requested to build a package
         if args.buildPackage:
             validation.file_search()
-            package = SubmissionPackage(validation.uuid, validation.full_file_path, config=config)
+            package = SubmissionPackage(
+                validation.uuid,
+                validation.full_file_path,
+                config=config)
             package.build_package()
             package.download_package()
-            print('\nA copy of your submission package has been saved to: {}'.
-                  format(os.path.join(package.package_folder, package.config.submission_packages)))
-            submission = Submission(package.package_id, package.full_file_path, config=config)
+            print('\nA copy of your submission package has been saved to: {}'. format(
+                os.path.join(package.package_folder, package.config.submission_packages)))
+            submission = Submission(
+                package.package_id,
+                package.full_file_path,
+                config=config)
             submission.submit()
             if validation.associated_files:
                 submission.submission_upload()
             else:
-                print('You have successfully completed uploading your files from package {}!'.format(
-                    submission.submission_id))
+                print(
+                    'You have successfully completed uploading your files from package {}!'.format(
+                        submission.submission_id))
                 sys.exit(0)
