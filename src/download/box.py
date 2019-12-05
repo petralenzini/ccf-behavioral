@@ -150,6 +150,22 @@ class LifespanBox:
 
         return matches
 
+    def getFileById(self, fileId):
+        return self.client.file(file_id=str(fileId))
+
+    def downloadFile(self, fileId, downloadDir=None, override=False):
+        downloadDir = downloadDir or self.cache
+        mode = "wb+" if override else "wb"
+
+        file = self.getFileById(fileId)
+        path = os.path.join(downloadDir, file.get().name)
+
+        with open(path, mode) as fd:
+            fd.write(file.content())
+
+        return path
+
+
     def download_file(self, file_id):
         """
         Downloads a single file to cache space or provided directory
