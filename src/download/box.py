@@ -181,13 +181,19 @@ class LifespanBox:
         #     self.download_file(f)
 
     def upload_file(self, source_path, folder_id):
-        filename = os.path.basename(source_path)
-        f = self.client.folder(str(folder_id)).upload(source_path)
-        print(f)
+        """
+        Upload a new file into an existing folder by folder_id.
+        """
+        file = self.client.folder(str(folder_id)).upload(source_path)
+        print(file)
+        return file
 
     def update_file(self, file_id, file_path):
-        f = self.client.file(str(file_id))
-        f.update_contents(file_path)
+        """
+        Upload a new version of an existing file by file_id
+        """
+        file = self.client.file(str(file_id)).update_contents(file_path)
+        return file
 
     @staticmethod
     def _match(string, pattern):
