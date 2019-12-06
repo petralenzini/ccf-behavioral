@@ -3,7 +3,7 @@ import sys
 from multiprocessing.dummy import Pool
 import pandas as pd
 import pycurl
-import io
+import json
 from io import BytesIO
 from boxsdk import JWTAuth, OAuth2, Client
 import numpy as np
@@ -25,10 +25,8 @@ class LifespanBox:
         self.client = self.get_client()
 
     def get_client(self):
-        #auth = JWTAuth.from_settings_file("/data/intradb/home/.boxApp/config.json")
         auth = JWTAuth.from_settings_file(
             "/home/shared/HCP/hcpinternal/ccf-nda-behavioral/store/.boxApp/config.json")
-        # access_token = auth.authenticate_instance()
         admin_client = Client(auth)
 
         lifespan_user = None
@@ -36,7 +34,6 @@ class LifespanBox:
         for user in admin_client.users():
             if user.name == self.user:
                 lifespan_user = user
-                # print(lifespan_user.login)
 
         if not lifespan_user:
             print(self.user + ' user was not found. Exiting...')
@@ -108,18 +105,6 @@ class LifespanBox:
         offset = 0
         results = []
 
-#        while True:
-#            print('looking for "{}" ...'.format(pattern))
-#            result = self.client.search().query(pattern, limit=limit, offset=offset, ancestor_folders=ancestor_folders)
-#            results.extend(result)
-#
-#            if not result:
-#                break
-#            if maxresults and len(results) >= maxresults:
-#                break
-#
-#            offset += limit
-
         print('looking for "{}" ...'.format(pattern))
         result = self.client.search().query(
             pattern,
@@ -172,7 +157,6 @@ class LifespanBox:
         """
 
         f = self.client.file(file_id=str(file_id))
-        # print(dir(f))
         print(f.get().name)
         file_path = os.path.join(self.cache, f.get().name)
 
@@ -226,18 +210,6 @@ class LifespanBox:
         return match
 
 
-# cols=['study','token','field','event','interview_date','sexatbirth','sitenum','dobvar']
-# a=['hcpdparent','ED177A8B4E7DCDBB53A11A9143B2E2C1','parent_id','visit_1_arm_1','intake_date','gender','site','dob']
-# b=['hcpa','E610C0507A988C245594F6A044CD52AD','subject_id','visit_1_arm_1','v1_date','gender','site','dob']
-# c=['hcpdchild','0B22D176386AB119E5DAD9B5B68C89E1','subject_id','visit_1_arm_1','intake_date','gender','site','dob']
-# d=['hcpd18','B6AFBB6CFCA55A46836DE4F78955F3A5','subject_id','visit_arm_1','intake_date','gender','site','dob']
-# df=pd.DataFrame([a,b,c,d],columns=cols)
-# df.to_csv('/data/intradb/home/.boxApp/redcapconfig.csv',index=False)
-
-# ssaga visit_1_arm_1
-
-    # , token=token[0],field=field[0],event=event[0]):
-
     def getredcapdata(self):
         """
         Downloads required fields for all nda structures from Redcap databases specified by details in redcapconfig file
@@ -247,7 +219,6 @@ class LifespanBox:
         flagged contains the extra characters other than the id so you can keep track of who should NOT be uploaded to NDA
          or elsewwhere shared
         """
-        #auth = pd.read_csv('/data/intradb/home/.boxApp/redcapconfig.csv')
         auth = pd.read_csv(
             '/home/shared/HCP/hcpinternal/ccf-nda-behavioral/store/.boxApp/redcapconfig.csv')
         studydata = pd.DataFrame()
@@ -308,7 +279,6 @@ class LifespanBox:
         flagged contains the extra characters other than the id so you can keep track of who should NOT be uploaded to NDA
          or elsewwhere shared
         """
-        #auth = pd.read_csv('/data/intradb/home/.boxApp/redcapconfig.csv')
         auth = pd.read_csv(
             '/home/shared/HCP/hcpinternal/ccf-nda-behavioral/store/.boxApp/redcapconfig.csv')
         #auth = pd.read_csv(redcapconfigfile)
@@ -353,8 +323,6 @@ class LifespanBox:
                 parent_ids.row.str.split(
                     pat=',').values.tolist(),
                 columns=headerv3.values.tolist()[0])
-            # pexpanded=pexpanded.loc[~(pexpanded.subject_id=='')]
-            # new=pexpanded['subject_id'].str.split("_",1,expand=True)
             pexpanded = pexpanded.loc[~(pexpanded[auth.field[i]] == '')]
             new = pexpanded[auth.field[i]].str.split("_", 1, expand=True)
             pexpanded['subject'] = new[0].str.strip()
@@ -364,7 +332,6 @@ class LifespanBox:
 
         return studydata
 
-    # , token=token[0],field=field[0],event=event[0]):
     def getredcapfields(self, fieldlist, study):
         """"
         Downloads requested fields from Redcap databases specified by details in redcapconfig file
@@ -383,8 +350,6 @@ class LifespanBox:
                 5,
                 len(fieldlist) +
                 5)]
-        #fieldlistlabel = ['field[' + str(i) + ']' for i in range(len(fieldlist))]
-        #fieldlistlabel = ['field[' + str(i) + ']' for i in range(5, len(fieldlist) + 5)]
         fieldrow = dict(zip(fieldlistlabel, fieldlist))
         d1 = {'token': auth.loc[auth.study == study,
                                 'token'].values[0],
@@ -432,8 +397,6 @@ class LifespanBox:
             parent_ids.row.str.split(
                 pat=',').values.tolist(),
             columns=headerv3.values.tolist()[0])
-        # pexpanded=pexpanded.loc[~(pexpanded.subject_id=='')]
-        # new=pexpanded['subject_id'].str.split("_",1,expand=True)
         pexpanded = pexpanded.loc[~(
             pexpanded[auth.loc[auth.study == study, 'field'].values[0]] == '')]
         new = pexpanded[auth.loc[auth.study == study,
@@ -454,8 +417,7 @@ class LifespanBox:
                                   (pd.to_datetime(studydata['interview_date']).dt.day -
                                       pd.to_datetime(studydata.dob).dt.day) /
                                   31)
-        studydata['nb_months'] = studydata['nb_months'].apply(
-            np.floor)  # .astype(int)
+        studydata['nb_months'] = studydata['nb_months'].apply(np.floor)
         studydata['nb_monthsPHI'] = studydata['nb_months']
         studydata.loc[studydata.nb_months > 1080, 'nb_monthsPHI'] = 1200
         studydata = studydata.drop(
@@ -466,70 +428,7 @@ class LifespanBox:
         return studydata
 
 
-#    def getredcapfields(self,fieldlist,study): #, token=token[0],field=field[0],event=event[0]):
-#        """
-#        Downloads requested fields from Redcap databases specified by details in redcapconfig file
-#        Returns panda dataframe with fields 'study', 'Subject_ID, 'subject', and 'flagged', where 'Subject_ID' is the
-#        patient id in the database of interest (sometimes called subject_id, parent_id) as well as requested fields.
-#        subject is this same id stripped of underscores or flags like 'excluded' to make it easier to merge
-#        flagged contains the extra characters other than the id so you can keep track of who should NOT be uploaded to NDA
-#         or elsewwhere shared
-#        """
-#        auth = pd.read_csv(redcapconfigfile)
-#        studydata=pd.DataFrame()
-#        fieldlistlabel=['fields['+str(i)+']' for i in range(5,len(fieldlist)+5)]
-#        #fieldlistlabel = ['field[' + str(i) + ']' for i in range(len(fieldlist))]
-#        #fieldlistlabel = ['field[' + str(i) + ']' for i in range(5, len(fieldlist) + 5)]
-#        fieldrow=dict(zip(fieldlistlabel,fieldlist))
-#        d1 = {'token': auth.loc[auth.study == study, 'token'][1], 'content': 'record', 'format': 'csv', 'type': 'flat',
-#              'fields[0]': auth.loc[auth.study == study, 'field'][1],
-#              'fields[1]': auth.loc[auth.study == study, 'interview_date'][1],
-#              'fields[2]': auth.loc[auth.study == study, 'sexatbirth'][1],
-#              'fields[3]': auth.loc[auth.study == study, 'sitenum'][1],
-#              'fields[4]': auth.loc[auth.study == study, 'dobvar'][1]}
-#        d2 = fieldrow
-#        d3 = {'events[0]': auth.loc[auth.study == study, 'event'][1], 'rawOrLabel': 'raw', 'rawOrLabelHeaders': 'raw',
-#              'exportCheckboxLabel': 'false',
-#              'exportSurveyFields': 'false', 'exportDataAccessGroups': 'false', 'returnFormat': 'json'}
-#        data = {**d1,**d2, **d3}
-#        buf = BytesIO()
-#        ch = pycurl.Curl()
-#        ch.setopt(ch.URL, 'https://redcap.wustl.edu/redcap/srvrs/prod_v3_1_0_001/redcap/api/')
-#        ch.setopt(ch.HTTPPOST, list(data.items()))
-#        ch.setopt(ch.WRITEDATA, buf)
-#        ch.perform()
-#        ch.close()
-#        htmlString = buf.getvalue().decode('UTF-8')
-#        buf.close()
-#        parent_ids=pd.DataFrame(htmlString.splitlines(),columns=['row'])
-#        header=parent_ids.iloc[0]
-#        headerv2=header.str.replace(auth.loc[auth.study == study, 'interview_date'][1],'interview_date')
-#        headerv3=headerv2.str.split(',')
-#        parent_ids.drop([0],inplace=True)
-#        pexpanded=pd.DataFrame(parent_ids.row.str.split(pat=',').values.tolist(),columns=headerv3.values.tolist()[0])
-#        #pexpanded=pexpanded.loc[~(pexpanded.subject_id=='')]
-#        #new=pexpanded['subject_id'].str.split("_",1,expand=True)
-#        pexpanded=pexpanded.loc[~(pexpanded[auth.loc[auth.study == study, 'field'][1]]=='')] ##
-#        new=pexpanded[auth.loc[auth.study == study, 'field'][1]].str.split("_",1,expand=True)
-#        pexpanded['subject']=new[0].str.strip()
-#        pexpanded['flagged']=new[1].str.strip()
-#        pexpanded['study']=study #auth.study[i]
-#        studydata=pd.concat([studydata,pexpanded],axis=0,sort=True)
-#        #Convert age in years to age in months
-#        #note that dob is hardcoded var name here because all redcap databases use same variable name...sue me
-#        #interview date, which was originally v1_date for hcpa, has been renamed in line above, headerv2
-#       studydata['nb_months']=(12 * (pd.to_datetime(studydata['interview_date']).dt.year - pd.to_datetime(studydata.dob).dt.year) +
-#            (pd.to_datetime(studydata['interview_date']).dt.month - pd.to_datetime(studydata.dob).dt.month)  +
-#            (pd.to_datetime(studydata['interview_date']).dt.day - pd.to_datetime(studydata.dob).dt.day)/31)
-#        studydata['nb_months'] = studydata['nb_months'].apply(np.floor).astype(int)
-#        studydata['nb_monthsPHI']=studydata['nb_months']
-#        studydata.loc[studydata.nb_months>1080,'nb_monthsPHI']=1200
-#        studydata=studydata.drop(columns={'nb_months'}).rename(columns={'nb_monthsPHI':'interview_age'})#
-#
-#        return studydata
-
-
-    def getredcapids(self):  # , token=token[0],field=field[0],event=event[0]):
+    def getredcapids(self):
         """
         Downloads field (IDS) in Redcap databases specified by details in redcapconfig file
         Returns panda dataframe with fields 'study', 'Subject_ID, 'subject', and 'flagged', where 'Subject_ID' is the
@@ -538,7 +437,6 @@ class LifespanBox:
         flagged contains the extra characters other than the id so you can keep track of who should NOT be uploaded to NDA
          or elsewwhere shared
         """
-        #auth = pd.read_csv('/data/intradb/home/.boxApp/redcapconfig.csv')
         auth = pd.read_csv(
             '/home/shared/HCP/hcpinternal/ccf-nda-behavioral/store/.boxApp/redcapconfig.csv')
         studyids = pd.DataFrame()
@@ -642,12 +540,6 @@ class LifespanBox:
         htmlString = buf.getvalue().decode('UTF-8')
         buf.close()
         d = json.loads(htmlString)
-        #parent_ids = pd.DataFrame(htmlString.splitlines(), columns=['row'])
-        #header = parent_ids.iloc[0]
-        #headerv2 = header.str.replace(auth.loc[auth.study == study, 'interview_date'].values[0], 'interview_date')
-        #headerv3 = headerv2.str.split(',')
-        #parent_ids.drop([0], inplace=True)
-        #pexpanded = pd.DataFrame(parent_ids.row.str.split(pat='\t').values.tolist(), columns=headerv3.values.tolist()[0])
         pexpanded = pd.DataFrame(d)
         pexpanded = pexpanded.loc[~(
             pexpanded[auth.loc[auth.study == study, 'field'].values[0]] == '')]
@@ -691,7 +583,6 @@ class LifespanBox:
             print(study + ' has no variable named gender')
         return studydata
 
-    # ,study,site,datatype,boxsnapshotfolderid,boxsnapshotQCfolderid):
     def Box2dataframe(self, curated_fileid_start):
         # get current best curated data from BOX (a csv with one header row)
         # and read into pandas dataframe for QC
@@ -710,23 +601,6 @@ class LifespanBox:
 
 if __name__ == '__main__':
     box = LifespanBox()
-
-    # print(dir(box.client.folder('0')))
-
-    # box.get_files(42902161768, '_Assessment_Scores_')
-
-    # box.download_file(254256599622)
-
-    # updated_file = os.path.join(box.cache, 'toolbox_combined.csv')
-    # box.update_file('286624284128', updated_file)
-
-    # f = box.client.file(file_id='286636032193')
-    # print(f.get()['name'])
-
-    # results = box.search(pattern='*KSADS*Screener*.xlsx', exclude='Key,MRH')
-    # print(len(results))
-    # for r in results:
-    #     print(r)
 
     results = box.search(
         pattern='-Aging_scores.csv',
