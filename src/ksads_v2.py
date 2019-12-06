@@ -32,7 +32,7 @@ box = LifespanBox(cache=ksads_cache_path)
 ksads_snapshotfolderid = 48203202724
 snapshotQCfolder = 76434619813
 
-# download one of the indentical key files which contain the labels for
+# download one of the identical key files which contain the labels for
 # all the numbered questions in KSADS
 keyfileid = box.search(pattern='*Key')
 box.downloadFile(keyfileid[0].id)
@@ -89,14 +89,14 @@ def main():
         # snapshot in 'store' and in 'snapshots' under all sites directory in
         # box.
         snap = 'KSADS_' + item + '_Snapshot_' + snapshotdate + '.csv'
-        snapshotfile = os.path.join(store_space, snap)  # or in store_space?
-        QCfile = os.path.join(ksads_cache_path, 'QC_' + snap)
-        dictcsv = os.path.join(ksads_cache_path, 'Dict_' + snap)
+        snapshot_filepath = os.path.join(store_space, snap)  # or in store_space?
+        QC_filepath = os.path.join(ksads_cache_path, 'QC_' + snap)
+        dictcsv_filepath = os.path.join(ksads_cache_path, 'Dict_' + snap)
 
         # write rows to csv in store
-        rows.to_csv(snapshotfile, index=False)
+        rows.to_csv(snapshot_filepath, index=False)
         # upload the snapshot into box
-        box.upload_file(snapshotfile, ksads_snapshotfolderid)
+        box.upload_file(snapshot_filepath, ksads_snapshotfolderid)
 
         # compare ids from snapshot (currently loaded into 'rows' dataframe)
         # with those in Redcap.
@@ -114,7 +114,7 @@ def main():
         # these are the ids that need to be checked by the sites
         combonotinredcap = combowredcap.loc[combowredcap.Subject_ID.isnull()].copy()
         combonotinredcap['reason'] = 'PatientID not in Redcap'
-        # combonotinredcap[['ID','PatientID','PatientType','SiteName','reason']].to_csv(QCfile,index=False)
+        # combonotinredcap[['ID','PatientID','PatientType','SiteName','reason']].to_csv(QC_filepath,index=False)
 
         combowredcap2 = pd.merge(
             rowsofinterest,
@@ -137,10 +137,10 @@ def main():
         catQC = pd.concat([combonotinredcap, notinboxunique, dups], axis=0, sort=True)[
             ['ID', 'PatientID', 'subject', 'study', 'site', 'gender', 'interview_date', 'reason']]
         catQC = catQC.sort_values(['site', 'study'])
-        catQC.to_csv(QCfile, index=False)
+        catQC.to_csv(QC_filepath, index=False)
 
         # upload QC file to box
-        box.upload_file(QCfile, snapshotQCfolder)
+        box.upload_file(QC_filepath, snapshotQCfolder)
 
         # just keep these in mind for time being
         # these are the ids that need to be
@@ -151,13 +151,13 @@ def main():
         # NDA release will be based on an explicitly named snapshot...not just whatever is in the rows right now - but the following files will
         # ease the process of harmonization.
         # slimhandle = assessments[item]['slim_id'] #this is a temporary file in the Behavioral Data - Snapshots / KSADS / temp folder for use viewing data
-        # slimf = makeslim(snapshotfile,slimhandle)  #make slim file in cache from snapshot in store (which is identical copy with same named file on box).
+        # slimf = makeslim(snapshot_filepath,slimhandle)  #make slim file in cache from snapshot in store (which is identical copy with same named file on box).
         # Note this will overwrite whatever is in the slim file with current data - write slim file to cache and to Scratch Export to NDA
         # make a draft datadictionary from slim file and start comparing columns - write dictionary to cache and to Scratch Export to NDA
         # makedatadictv2(slimf,assessments[item]['dict_id'],cachekeyfile,assessments[item]['key_sheet'])
         inst = item
-        makedatadictv2(snapshotfile, dictcsv, inst)
-        box.upload_file(dictcsv, ksads_snapshotfolderid)
+        makedatadictv2(snapshot_filepath, dictcsv_filepath, inst)
+        box.upload_file(dictcsv_filepath, ksads_snapshotfolderid)
     # Clean up cache space
     shutil.rmtree(box.cache)
 
