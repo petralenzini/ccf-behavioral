@@ -14,7 +14,8 @@ default_cache = "/data/intradb/tmp/box2nda_cache"
 # REDCAP API tokens moved to configuration file
 # redcapIDconfigfile='/data/intradb/home/.boxApp/redcapconfig.csv'
 redcapconfigfile = '/home/shared/HCP/hcpinternal/ccf-nda-behavioral/store/.boxApp/redcapconfig.csv'
-
+box_config = "/home/shared/HCP/hcpinternal/ccf-nda-behavioral/store/.boxApp/config.json"
+redcap_api_url = 'https://redcap.wustl.edu/redcap/srvrs/prod_v3_1_0_001/redcap/api/'
 
 class LifespanBox:
     def __init__(self, cache=default_cache, user='Lifespan Automation'):
@@ -25,8 +26,7 @@ class LifespanBox:
         self.client = self.get_client()
 
     def get_client(self):
-        auth = JWTAuth.from_settings_file(
-            "/home/shared/HCP/hcpinternal/ccf-nda-behavioral/store/.boxApp/config.json")
+        auth = JWTAuth.from_settings_file(box_config)
         admin_client = Client(auth)
 
         lifespan_user = None
@@ -43,7 +43,7 @@ class LifespanBox:
 
     def get_dev_client(self):
         # Dev access token, active for 1 hour. Get new token here:
-        # https://wustl.app.box.com/developers/console/app/333873/configuration
+        # https://wustl.app.box.com/developers/console
         auth = OAuth2(
             client_id='',
             client_secret='',
@@ -219,8 +219,7 @@ class LifespanBox:
         flagged contains the extra characters other than the id so you can keep track of who should NOT be uploaded to NDA
          or elsewwhere shared
         """
-        auth = pd.read_csv(
-            '/home/shared/HCP/hcpinternal/ccf-nda-behavioral/store/.boxApp/redcapconfig.csv')
+        auth = pd.read_csv(redcapconfigfile)
         studydata = pd.DataFrame()
         # skip 1st row of auth which holds parent info
         for i in range(1, len(auth.study)):
@@ -245,7 +244,7 @@ class LifespanBox:
             ch = pycurl.Curl()
             ch.setopt(
                 ch.URL,
-                'https://redcap.wustl.edu/redcap/srvrs/prod_v3_1_0_001/redcap/api/')
+                redcap_api_url)
             ch.setopt(ch.HTTPPOST, list(data.items()))
             ch.setopt(ch.WRITEDATA, buf)
             ch.perform()
@@ -279,9 +278,7 @@ class LifespanBox:
         flagged contains the extra characters other than the id so you can keep track of who should NOT be uploaded to NDA
          or elsewwhere shared
         """
-        auth = pd.read_csv(
-            '/home/shared/HCP/hcpinternal/ccf-nda-behavioral/store/.boxApp/redcapconfig.csv')
-        #auth = pd.read_csv(redcapconfigfile)
+        auth = pd.read_csv(redcapconfigfile)
         studydata = pd.DataFrame()
         # DONT skip 1st row of auth which holds parent info
         for i in range(0, len(auth.study)):
@@ -306,7 +303,7 @@ class LifespanBox:
             ch = pycurl.Curl()
             ch.setopt(
                 ch.URL,
-                'https://redcap.wustl.edu/redcap/srvrs/prod_v3_1_0_001/redcap/api/')
+                redcap_api_url)
             ch.setopt(ch.HTTPPOST, list(data.items()))
             ch.setopt(ch.WRITEDATA, buf)
             ch.perform()
@@ -380,7 +377,7 @@ class LifespanBox:
         ch = pycurl.Curl()
         ch.setopt(
             ch.URL,
-            'https://redcap.wustl.edu/redcap/srvrs/prod_v3_1_0_001/redcap/api/')
+            redcap_api_url)
         ch.setopt(ch.HTTPPOST, list(data.items()))
         ch.setopt(ch.WRITEDATA, buf)
         ch.perform()
@@ -437,8 +434,7 @@ class LifespanBox:
         flagged contains the extra characters other than the id so you can keep track of who should NOT be uploaded to NDA
          or elsewwhere shared
         """
-        auth = pd.read_csv(
-            '/home/shared/HCP/hcpinternal/ccf-nda-behavioral/store/.boxApp/redcapconfig.csv')
+        auth = pd.read_csv(redcapconfigfile)
         studyids = pd.DataFrame()
         for i in range(len(auth.study)):
             data = {
@@ -458,7 +454,7 @@ class LifespanBox:
             ch = pycurl.Curl()
             ch.setopt(
                 ch.URL,
-                'https://redcap.wustl.edu/redcap/srvrs/prod_v3_1_0_001/redcap/api/')
+                redcap_api_url)
             ch.setopt(ch.HTTPPOST, list(data.items()))
             ch.setopt(ch.WRITEDATA, buf)
             ch.perform()
@@ -532,7 +528,7 @@ class LifespanBox:
         ch = pycurl.Curl()
         ch.setopt(
             ch.URL,
-            'https://redcap.wustl.edu/redcap/srvrs/prod_v3_1_0_001/redcap/api/')
+            redcap_api_url)
         ch.setopt(ch.HTTPPOST, list(data.items()))
         ch.setopt(ch.WRITEDATA, buf)
         ch.perform()
