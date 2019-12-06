@@ -14,24 +14,19 @@ from download.box import LifespanBox
 verbose = True
 # verbose = False
 snapshotdate = datetime.datetime.today().strftime('%m_%d_%Y')
-
 root_cache = '/data/intradb/tmp/box2nda_cache/'
-cache_space = os.path.join(root_cache, 'ksads')
-try:
-    os.mkdir(cache_space)
-except BaseException:
-    print("cache already exists or something went wrong")
+ksads_cache_path = os.path.join(root_cache, 'ksads')
+if not os.path.exists(ksads_cache_path):
+    os.mkdir(ksads_cache_path)
 
 root_store = '/home/shared/HCP/hcpinternal/ccf-nda-behavioral/store/'
 # this will be the place to save any snapshots on the nrg servers
 store_space = os.path.join(root_store, 'ksads')
-try:
-    os.mkdir(store_space)  # look for store space before creating it here
-except BaseException:
-    print("store already exists")
+if not os.path.exists(store_space):
+    os.mkdir(store_space)
 
 # connect to Box
-box = LifespanBox(cache=cache_space)
+box = LifespanBox(cache=ksads_cache_path)
 
 # snapshot folder (used to be the combined folder)
 ksads_snapshotfolderid = 48203202724
@@ -42,7 +37,7 @@ snapshotQCfolder = 76434619813
 keyfileid = box.search(pattern='*Key')
 box.downloadFile(keyfileid[0].id)
 qkey = keyfileid[0].name
-cachekeyfile = os.path.join(cache_space, qkey)
+cachekeyfile = os.path.join(ksads_cache_path, qkey)
 
 # hard coding to prevent read of files that shouldnt be in these folders in box.  cant do a search.
 # WU,UMN,UCLA, and Harvard, respectively, for cleanest start file ids below
@@ -95,8 +90,8 @@ def main():
         # box.
         snap = 'KSADS_' + item + '_Snapshot_' + snapshotdate + '.csv'
         snapshotfile = os.path.join(store_space, snap)  # or in store_space?
-        QCfile = os.path.join(cache_space, 'QC_' + snap)
-        dictcsv = os.path.join(cache_space, 'Dict_' + snap)
+        QCfile = os.path.join(ksads_cache_path, 'QC_' + snap)
+        dictcsv = os.path.join(ksads_cache_path, 'Dict_' + snap)
 
         # write rows to csv in store
         rows.to_csv(snapshotfile, index=False)
@@ -397,7 +392,7 @@ def makedatadict(slimf, dict_id, cachekeyfile, sheet):
                              'numunique',
                              'num_nonmissing']].copy()
     # push this back to box
-    fileoutdict = os.path.join(cache_space, cachefile + "_DataDictionary.csv")
+    fileoutdict = os.path.join(ksads_cache_path, cachefile + "_DataDictionary.csv")
     varvalues2.to_csv(fileoutdict, index=False)
     if dictf is None:
         box.upload_file(fileoutdict, str(ksadscombinedfolderid))
@@ -434,7 +429,7 @@ def share_ksads(
         combonotflaggedinredcap = combowredcap.loc[combowredcap.flagged.isnull(
         )]
         temporaryfile = os.path.join(
-            cache_space, snapshort + specialstring + '.csv')
+            ksads_cache_path, snapshort + specialstring + '.csv')
         combonotflaggedinredcap.to_csv(temporaryfile, index=False)
         # upload QC file to box
         box.upload_file(temporaryfile, boxoutdir)

@@ -189,9 +189,10 @@ class LifespanBox:
         if directory:
             self.cache = directory
         pool = Pool(workers)
-        pool.map(self.downloadFile, file_ids)
+        filepaths = pool.map(self.downloadFile, file_ids)
         pool.close()
         pool.join()
+        return filepaths
         # Euivalent to this for loop
         # for f in file_ids:
         #     self.download_file(f)
