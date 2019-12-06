@@ -94,8 +94,7 @@ files2cat = pd.DataFrame(os.listdir(cache_space), columns=['fname'])
 # study info.  Replace UMN ids, where applicable, and correct any other
 # known (historical) issues.
 cleanest_scores = 476857277893
-scoresfile = box.download_file(cleanest_scores)
-scores_path = os.path.join(cache_space, scoresfile.get().name)
+scores_path = box.downloadFile(cleanest_scores)
 cleanestscores = pd.read_csv(
     scores_path,
     header=0,
@@ -360,8 +359,7 @@ box.upload_file(Harvard_HCDonly_storefile, 82803734267)
 # STEP 1: get cleanest Raw data so far and merge with Redcap to get site and study info.  Replace UMN ids, where applicable, and correct any other known (historical) issues.
 # call this raw data
 cleanest_raw = 476857675439  # ..as of 7/24/2019.
-datafile = box.download_file(cleanest_raw)
-data_path = os.path.join(cache_space, datafile.get().name)
+data_path = box.downloadFile(cleanest_raw)
 cleanestraw = pd.read_csv(
     data_path,
     header=0,

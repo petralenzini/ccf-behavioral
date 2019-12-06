@@ -6,7 +6,6 @@ import sys
 import shutil
 from openpyxl import load_workbook
 import pandas as pd
-import download.box
 import numpy as np
 
 from download.box import LifespanBox
@@ -39,6 +38,7 @@ box = LifespanBox(cache=cache_space)
 penn_snapshotfolderid = 48203214504
 snapshotQCfolder = 76434619813
 slimfolder = 77127935742
+
 
 # hard coding to prevent read of files that shouldnt be in these folders in box.  cant do a search.
 # WU,UMN,UCLA, and Harvard, HCA and HCD data all in one single file under
@@ -235,8 +235,8 @@ def findupdates(base_id=454918321952, compare_id=454298717674):
     """
     compare two files by dataset id for updates to other columns
     """
-    fbase = box.download_file(base_id)
-    basecachefile = os.path.join(box.cache, fbase.get().name)
+    fbase = box.getFileById(base_id)
+    basecachefile = box.downloadFile(base_id)
     wb_base = load_workbook(filename=basecachefile)
     basequestionnaire = wb_base[wb_base.sheetnames[0]]
     fbaseraw = pd.DataFrame(basequestionnaire.values)
@@ -244,8 +244,8 @@ def findupdates(base_id=454918321952, compare_id=454298717674):
     fbaseraw = fbaseraw[1:]
     fbaseraw.columns = header
     # now the file to compare
-    fcompare = box.download_file(compare_id)
-    comparecachefile = os.path.join(box.cache, fcompare.get().name)
+    fcompare = box.getFileById(compare_id)
+    comparecachefile = box.downloadFile(compare_id)
     wb_compare = load_workbook(filename=comparecachefile)
     comparequestionnaire = wb_compare[wb_compare.sheetnames[0]]
     fcompareraw = pd.DataFrame(comparequestionnaire.values)
@@ -290,8 +290,7 @@ def get_all_rows(sites):
     rows = []
     for site_file in sites:
         # Download file contents to cache
-        fh = box.download_file(site_file)  # .id)
-        path = os.path.join(box.cache, fh.get().name)
+        path = box.downloadFile(site_file)
         wb = load_workbook(filename=path)
         # print(wb.sheetnames)
         if len(wb.sheetnames) > 1:
@@ -359,7 +358,8 @@ def makeslim(storefilename, slim_id):
     """
     remove columns from cachecopy that have no data and upload slim file to box
     """
-    slimf = box.download_file(slim_id)
+    box.downloadFile(slim_id)
+    slimf = box.getFileById(slim_id)
     ksadsraw = pd.read_csv(storefilename, header=0, low_memory=False)
     ksadsraw = ksadsraw.dropna(axis=1, how='all')
     snapname = os.path.basename(storefilename)
@@ -381,7 +381,8 @@ def makedatadict(
     create datadictionary from csvfile and upload dictionary to box
     """
     try:
-        dictf = box.download_file(dict_id)
+        box.downloadFile(dict_id)
+        dictf = box.getFileById(dict_id)
     except BaseException:
         dictf = None
     cachefile = os.path.join(box.cache, slimf.get().name.split('.')[0])
@@ -433,9 +434,9 @@ def makedatadict(
     fileoutdict = os.path.join(cache_space, cachefile + "_DataDictionary.csv")
     varvalues2.to_csv(fileoutdict, index=False)
     if dictf is None:
-        box.client.folder(str(folderout)).upload(fileoutdict)
+        box.upload_file(fileoutdict, str(folderout))
     else:
-        dictf.update_contents(fileoutdict)
+        box.update_file(dict_id, fileoutdict)
 
 
 if __name__ == '__main__':

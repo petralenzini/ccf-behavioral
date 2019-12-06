@@ -57,8 +57,7 @@ cleanestdata = 495490047901
 # This will allow BOX to track versioning until better system is in place
 # Once you've updated the Allsites database, you're ready to begin QC.
 # remember to check visit summary for information pertaining to missing rows.
-fbase = box.download_file(cleanestdata)
-basecachefile = os.path.join(box.cache, fbase.get().name)
+basecachefile = box.downloadFile(cleanestdata)
 baseclean = pd.read_csv(basecachefile, header=0, low_memory=False)
 
 studyids = box.getredcapids()
@@ -151,7 +150,8 @@ def makedatadict(
     create datadictionary from csvfile and upload dictionary to box
     """
     try:
-        dictf = box.download_file(dict_id)
+        box.downloadFile(dict_id)
+        dictf = box.getFileById(dict_id)
     except BaseException:
         dictf = None
     try:
@@ -206,6 +206,6 @@ def makedatadict(
     fileoutdict = os.path.join(cache_space, cachefile + "_DataDictionary.csv")
     varvalues2.to_csv(fileoutdict, index=False)
     if dictf is None:
-        box.client.folder(str(folderout)).upload(fileoutdict)
+        box.upload_file(fileoutdict, str(folderout))
     else:
-        dictf.update_contents(fileoutdict)
+        box.update_file(dict_id, fileoutdict)

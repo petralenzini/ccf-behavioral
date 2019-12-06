@@ -40,7 +40,7 @@ snapshotQCfolder = 76434619813
 # download one of the indentical key files which contain the labels for
 # all the numbered questions in KSADS
 keyfileid = box.search(pattern='*Key')
-box.download_file(keyfileid[0].id)
+box.downloadFile(keyfileid[0].id)
 qkey = keyfileid[0].name
 cachekeyfile = os.path.join(cache_space, qkey)
 
@@ -83,8 +83,7 @@ def main():
         # for each site) from KSADS.net, append rows to site/assessment file (by hand until this program written to automate),
         # and incorporate and errors from wiki...look for any missing rows, but check redcap visit summary to make sure not already known to be missing
         # then save updated xls files with new date, navigate to file in box and select 'upload new version.'
-        # This will allow BOX to track versioning until better system is in
-        # place
+        # This will allow BOX to track versioning until better system is in place
         site_files = assessments[item]['cleanest_start']
 
         # Get all rows from all site output files for cleanest files as a
@@ -178,8 +177,8 @@ def findupdates(base_id=454918321952, compare_id=454298717674):
     """
     compare two files by dataset id for updates to other columns
     """
-    fbase = box.download_file(base_id)
-    basecachefile = os.path.join(box.cache, fbase.get().name)
+    fbase = box.getFileById(base_id)
+    basecachefile = box.downloadFile(base_id)
     wb_base = load_workbook(filename=basecachefile)
     basequestionnaire = wb_base[wb_base.sheetnames[0]]
     fbaseraw = pd.DataFrame(basequestionnaire.values)
@@ -187,8 +186,8 @@ def findupdates(base_id=454918321952, compare_id=454298717674):
     fbaseraw = fbaseraw[1:]
     fbaseraw.columns = header
     # now the file to compare
-    fcompare = box.download_file(compare_id)
-    comparecachefile = os.path.join(box.cache, fcompare.get().name)
+    fcompare = box.getFileById(compare_id)
+    comparecachefile = box.downloadFile(compare_id)
     wb_compare = load_workbook(filename=comparecachefile)
     comparequestionnaire = wb_compare[wb_compare.sheetnames[0]]
     fcompareraw = pd.DataFrame(comparequestionnaire.values)
@@ -233,8 +232,7 @@ def get_all_rows(sites):
     rows = []
     for site_file in sites:
         # Download file contents to cache
-        fh = box.download_file(site_file)  # .id)
-        path = os.path.join(box.cache, fh.get().name)
+        path = box.downloadFile(site_file)
         wb = load_workbook(filename=path)
         # print(wb.sheetnames)
         if len(wb.sheetnames) > 1:
@@ -302,15 +300,14 @@ def makeslim(storefilename, slim_id):
     """
     remove columns from cachecopy that have no data and upload slim file to box
     """
-    slimf = box.download_file(slim_id)
+    box.downloadFile(slim_id)
     ksadsraw = pd.read_csv(storefilename, header=0, low_memory=False)
     ksadsraw = ksadsraw.dropna(axis=1, how='all')
     snapname = os.path.basename(storefilename)
     combined_fileout = os.path.join(
         box.cache, snapname.split('.')[0] + 'Slim.csv')
     ksadsraw.to_csv(combined_fileout, index=False)
-    slimf.update_contents(combined_fileout)
-    return slimf
+    return box.update_file(slim_id, combined_fileout)
 
 
 def makedatadictv2(filecsv, dictcsv, inst):
@@ -359,7 +356,8 @@ def makedatadict(slimf, dict_id, cachekeyfile, sheet):
     create datadictionary from csvfile and upload dictionary to box
     """
     try:
-        dictf = box.download_file(dict_id)
+        dictf = box.getFileById(dict_id)
+        box.downloadFile(dict_id)
     except BaseException:
         dictf = None
     cachefile = os.path.join(box.cache, slimf.get().name.split('.')[0])
@@ -402,9 +400,9 @@ def makedatadict(slimf, dict_id, cachekeyfile, sheet):
     fileoutdict = os.path.join(cache_space, cachefile + "_DataDictionary.csv")
     varvalues2.to_csv(fileoutdict, index=False)
     if dictf is None:
-        box.client.folder(str(ksadscombinedfolderid)).upload(fileoutdict)
+        box.upload_file(fileoutdict, str(ksadscombinedfolderid))
     else:
-        dictf.update_contents(fileoutdict)
+        box.update_file(dict_id, fileoutdict)
 
 
 if __name__ == '__main__':

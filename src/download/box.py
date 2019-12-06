@@ -189,7 +189,7 @@ class LifespanBox:
         if directory:
             self.cache = directory
         pool = Pool(workers)
-        pool.map(self.download_file, file_ids)
+        pool.map(self.downloadFile, file_ids)
         pool.close()
         pool.join()
         # Euivalent to this for loop
@@ -695,8 +695,7 @@ class LifespanBox:
         # get current best curated data from BOX (a csv with one header row)
         # and read into pandas dataframe for QC
         raw_fileid = curated_fileid_start
-        rawobject = box.download_file(raw_fileid)
-        data_path = os.path.join(cache_space, rawobject.get().name)
+        data_path = box.downloadFile(raw_fileid)
         raw = pd.read_csv(
             data_path,
             header=0,

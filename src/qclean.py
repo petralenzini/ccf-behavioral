@@ -57,8 +57,7 @@ cleanestdata = 465568117756
 # remember to check visit summary for information pertaining to missing rows.
 # Get all rows from all site output files for cleanest files as a pandas
 # dataframe with column labels BY ASSESSMENT and tease out vars
-fbase = box.download_file(cleanestdata)
-basecachefile = os.path.join(box.cache, fbase.get().name)
+basecachefile = box.downloadFile(cleanestdata)
 #excelfile='/home/petra/UbWinSharedSpace1/redcap2nda_Lifespan2019/LifeSpan_RedCap_Data_Dictionaries/HCP-A&D Family Relationships  (4).xlsx'
 #dfdupids=pd.read_excel(excelfile,sheet_name='HCP Participants - Multiple IDs',header=0)
 baseclean = pd.read_excel(
@@ -282,6 +281,8 @@ def makedatadict(
     create datadictionary from csvfile and upload dictionary to box
     """
     try:
+        box.downloadFile(dict_id)
+        dictf = box.getFileById(dict_id)
         dictf = box.download_file(dict_id)
     except BaseException:
         dictf = None
@@ -337,6 +338,6 @@ def makedatadict(
     fileoutdict = os.path.join(cache_space, cachefile + "_DataDictionary.csv")
     varvalues2.to_csv(fileoutdict, index=False)
     if dictf is None:
-        box.client.folder(str(folderout)).upload(fileoutdict)
+        box.upload_file(fileoutdict, str(folderout))
     else:
-        dictf.update_contents(fileoutdict)
+        box.update_file(dict_id, fileoutdict)
