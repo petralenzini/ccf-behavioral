@@ -5,9 +5,6 @@ import pandas as pd
 from boxsdk import JWTAuth, OAuth2, Client
 
 default_cache = "/data/intradb/tmp/box2nda_cache"
-
-# REDCAP API tokens moved to configuration file
-# redcapIDconfigfile='/data/intradb/home/.boxApp/redcapconfig.csv'
 box_config = "/home/shared/HCP/hcpinternal/ccf-nda-behavioral/store/.boxApp/config.json"
 
 class LifespanBox:
@@ -178,6 +175,9 @@ class LifespanBox:
         """
         Upload a new file into an existing folder by folder_id.
         """
+        print('Mock method upload_file for file %s' % source_path)
+        return None
+
         file = self.client.folder(str(folder_id)).upload(source_path)
         print(file)
         return file
@@ -186,6 +186,10 @@ class LifespanBox:
         """
         Upload a new version of an existing file by file_id
         """
+        print('Mock method update_file for file %s' % file_path)
+        file = self.getFileById(file_id)
+        return file
+
         file = self.client.file(str(file_id)).update_contents(file_path)
         return file
 
