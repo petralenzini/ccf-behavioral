@@ -1,15 +1,17 @@
 #!/usr/bin/python3
 import argparse
 import subprocess
+from datetime import datetime
+
 from robobrowser import RoboBrowser
 
 
 def main():
     parser = argparse.ArgumentParser(description="Downloads the data from KSADS.net")
-    user_group = parser.add_mutually_exclusive_group()
+    user_group = parser.add_mutually_exclusive_group(required=True)
     user_group.add_argument("-u", "--user", type=str, help="username")
     user_group.add_argument("-U", "--userexec", metavar="EXEC", type=str, help="run command to get username")
-    password_group = parser.add_mutually_exclusive_group()
+    password_group = parser.add_mutually_exclusive_group(required=True)
     password_group.add_argument("-p", "--password", type=str, help="password")
     password_group.add_argument("-P", "--passwordexec", metavar="EXEC", type=str, help="run command to get password")
 
@@ -73,7 +75,8 @@ def download_ksads(user, password):
 
             # save results to file
             if browser.response.ok:
-                file_name = '%s_%s.xlsx' % (studysite, studytype)
+                timestamp = datetime.today().strftime('_%m_%d_%Y')
+                file_name = '%s_%s%s.xlsx' % (studysite, studytype, timestamp)
                 print('Saving ' + file_name)
                 with open(file_name, "wb+") as fd:
                     fd.write(browser.response.content)

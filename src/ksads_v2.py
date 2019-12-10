@@ -5,26 +5,33 @@ import shutil
 from openpyxl import load_workbook
 import pandas as pd
 import numpy as np
+from config import config
 from download import redcap
 
 from download.box import LifespanBox
 
-verbose = True
+
+
+config['root'] = {'cache': '/home/osboxes/PycharmProjects/ccf/tmp/cache/',
+                  'store': '/home/osboxes/PycharmProjects/ccf/tmp/store/'}
+config['config_files']['box'] = '/home/osboxes/PycharmProjects/ccf/tmp/.boxApp/config.json'
+
 # verbose = False
+verbose = True
 snapshotdate = datetime.datetime.today().strftime('%m_%d_%Y')
-root_cache = '/data/intradb/tmp/box2nda_cache/'
+root_cache = config['root']['cache']
 ksads_cache_path = os.path.join(root_cache, 'ksads')
 if not os.path.exists(ksads_cache_path):
     os.mkdir(ksads_cache_path)
 
-root_store = '/home/shared/HCP/hcpinternal/ccf-nda-behavioral/store/'
+root_store = config['root']['store']
 # this will be the place to save any snapshots on the nrg servers
 store_space = os.path.join(root_store, 'ksads')
 if not os.path.exists(store_space):
     os.mkdir(store_space)
 
 # connect to Box
-box = LifespanBox(cache=ksads_cache_path)
+box = LifespanBox(cache=ksads_cache_path, config_file=config['config_files']['box'])
 
 # snapshot folder (used to be the combined folder)
 ksads_snapshotfolderid = 48203202724
@@ -32,41 +39,11 @@ snapshotQCfolder = 76434619813
 
 # download one of the identical key files which contain the labels for
 # all the numbered questions in KSADS
-keyfileid = box.search(pattern='*Key')
-box.downloadFile(keyfileid[0].id)
-qkey = keyfileid[0].name
-cachekeyfile = os.path.join(ksads_cache_path, qkey)
+cachekeyfile = box.downloadFile(506958838440)
 
 # hard coding to prevent read of files that shouldnt be in these folders in box.  cant do a search.
 # WU,UMN,UCLA, and Harvard, respectively, for cleanest start file ids below
-assessments = {
-    'Screener': {
-        'slim_id': 449798152073,
-        'dict_id': 450226557492,
-        'key_sheet': 'Screener',
-        'cleanest_start': [
-            317204091034,
-            317230106899,
-            317224489061,
-            317216055920]},
-    'Intro': {
-        'slim_id': 449745327689,
-        'dict_id': 450219939565,
-        'key_sheet': 'intro',
-        'cleanest_start': [
-            317203291349,
-            317226607001,
-            317224169848,
-            317223373321]},
-    'Supplement': {
-        'slim_id': 449779011618,
-        'dict_id': 450238563945,
-        'key_sheet': 'Supplement',
-        'cleanest_start': [
-            317203382109,
-            317226471328,
-            317224494224,
-            317222199440]}}
+assessments = config['Assessments']
 
 
 def main():
