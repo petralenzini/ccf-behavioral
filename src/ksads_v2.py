@@ -199,29 +199,15 @@ def get_all_rows(sites):
     """
     reads all rows from site xls files as data frame
     """
-    rows = []
+    dataframes = []
     for site_file in sites:
         # Download file contents to cache
         path = box.downloadFile(site_file)
-        wb = load_workbook(filename=path)
-        # print(wb.sheetnames)
-        if len(wb.sheetnames) > 1:
-            print('More than one worksheet.')
-            print(wb.sheetnames)
-            print('Using the first one --> ' + wb.sheetnames[0])
-            continue
-        questionnaire = wb[wb.sheetnames[0]]
-        print(questionnaire)
-        # Skip the header for all but the first file
-        current_row = 0
-        for row in questionnaire.values:
-            if current_row == 0:
-                header = row
-            if current_row != 0:
-                rows.append(row)
-            current_row += 1
-        rowsasdf = pd.DataFrame(rows, columns=header)
-    return rowsasdf
+        df = pd.read_excel(path)
+        df.columns = df.columns.astype(str)
+        dataframes.append(df)
+
+    return pd.concat(dataframes)
 
 
 def append_new_data(rows, combined_file):
