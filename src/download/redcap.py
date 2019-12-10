@@ -4,11 +4,10 @@ import json
 from io import BytesIO
 import numpy as np
 
+from config import config
 
-# REDCAP API tokens moved to configuration file
-# redcapIDconfigfile='/data/intradb/home/.boxApp/redcapconfig.csv'
-redcapconfigfile = '/home/shared/HCP/hcpinternal/ccf-nda-behavioral/store/.boxApp/redcapconfig.csv'
-redcap_api_url = 'https://redcap.wustl.edu/redcap/srvrs/prod_v3_1_0_001/redcap/api/'
+redcapconfigfile = config['redcap']['config']
+redcap_api_url = config['redcap']['api_url']
 
 def getredcapdata(self):
     """

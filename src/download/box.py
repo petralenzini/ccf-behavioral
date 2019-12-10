@@ -4,19 +4,22 @@ from multiprocessing.dummy import Pool
 import pandas as pd
 from boxsdk import JWTAuth, OAuth2, Client
 
-default_cache = "/data/intradb/tmp/box2nda_cache"
-box_config = "/home/shared/HCP/hcpinternal/ccf-nda-behavioral/store/.boxApp/config.json"
+from config import config
+
+default_cache = config['root']['cache']
+default_config = config['config_files']['box']
 
 class LifespanBox:
-    def __init__(self, cache=default_cache, user='Lifespan Automation'):
+    def __init__(self, cache=default_cache, user='Lifespan Automation', config_file=default_config):
         self.user = user
         self.cache = cache
+        self.config_file = config_file
         if not os.path.exists(cache):
             os.mkdir(cache)
         self.client = self.get_client()
 
     def get_client(self):
-        auth = JWTAuth.from_settings_file(box_config)
+        auth = JWTAuth.from_settings_file(self.config_file)
         admin_client = Client(auth)
 
         lifespan_user = None
