@@ -10,6 +10,7 @@ from openpyxl import load_workbook
 import pandas as pd
 import numpy as np
 import download.box
+from download import redcap
 
 from download.box import LifespanBox
 #from download.box import getredcapids
@@ -60,8 +61,8 @@ cleanestdata = 495490047901
 basecachefile = box.downloadFile(cleanestdata)
 baseclean = pd.read_csv(basecachefile, header=0, low_memory=False)
 
-studyids = box.getredcapids()
-studydata = box.getredcapdata()
+studyids = redcap.getredcapids()
+studydata = redcap.getredcapdata()
 # create snapshot of combined file store snapshot in 'store' and in
 # 'snapshots' under all sites directory in box.
 snap = 'Eprime_Snapshot_' + snapshotdate + '.csv'
@@ -99,7 +100,7 @@ notinboxunique = notinboxunique.loc[notinboxunique.nb_months < 96].copy()
 notinboxunique = notinboxunique.loc[notinboxunique.flagged.isnull()].copy()
 notinboxunique['reason'] = 'Missing in Box'
 # remove the permanent missings
-status1 = box.getredcapfields(['data_status', 'misscat'], study='hcpdchild')
+status1 = redcap.getredcapfields(['data_status', 'misscat'], study='hcpdchild')
 status1 = status1[['data_status', 'misscat___9', 'subject']].copy()
 tnotinboxunique = pd.merge(notinboxunique, status1, how='left', on='subject')
 notinboxunique = tnotinboxunique.loc[~(tnotinboxunique.misscat___9 == '1')]

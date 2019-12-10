@@ -1,13 +1,11 @@
 import os
 import datetime
 import csv
-import pycurl
-import sys
 import shutil
 from openpyxl import load_workbook
 import pandas as pd
 import numpy as np
-import download.box
+from download import redcap
 
 from download.box import LifespanBox
 
@@ -100,8 +98,8 @@ def main():
 
         # compare ids from snapshot (currently loaded into 'rows' dataframe)
         # with those in Redcap.
-        studyids = box.getredcapids()
-        studydata = box.getredcapdata()
+        studyids = redcap.getredcapids()
+        studydata = redcap.getredcapdata()
         rowsofinterest = rows[['ID', 'PatientID',
                                'PatientType', 'SiteName']].copy()
         new = rowsofinterest['PatientID'].str.split("_", 1, expand=True)
@@ -419,7 +417,7 @@ def share_ksads(
         snapshort = 'KSADS_' + item + '_Snapshot_' + snapshotdate
         snapshotfile = os.path.join(store_space, snap)
         rows = pd.read_csv(snapshotfile, header=0, low_memory=False)
-        studyids = box.getredcapids()
+        studyids = redcap.getredcapids()
         new = rows['PatientID'].str.split("_", 1, expand=True)
         rows['subject'] = new[0].str.strip()
         combowredcap = pd.merge(rows, studyids, how='inner', on='subject')

@@ -8,6 +8,7 @@ from openpyxl import load_workbook
 import pandas as pd
 import numpy as np
 
+from download import redcap
 from download.box import LifespanBox
 #from download.box import getredcapids
 
@@ -75,8 +76,8 @@ def main():
         box.upload_file(snapshotfile, penn_snapshotfolderid)
         # compare ids from snapshot (currently loaded into 'rows' dataframe)
         # with those in Redcap.
-        studyids = box.getredcapids()
-        studydata = box.getredcapdata()
+        studyids = redcap.getredcapids()
+        studydata = redcap.getredcapdata()
         # rowsofinterest=rows[['ID','PatientID','PatientType','SiteName']].copy()
         rowsofinterest = rows[['datasetid',
                                'siteid', 'subid', 'assessment']].copy()
@@ -101,7 +102,7 @@ def main():
         #notinboxunique.loc[(notinboxunique.interview_date<'2019-05-01') & (notinboxunique.flagged.isnull()==True)]
         notinboxunique = notinboxunique.loc[notinboxunique.flagged.isnull()]
         # notinboxunique=notinboxunique.loc[notinboxunique.interview_date<'2019-05-01']
-        status1 = box.getredcapfields(
+        status1 = redcap.getredcapfields(
             ['data_status', 'misscat'], study='hcpdchild')
         status1 = status1[['data_status', 'misscat___9', 'subject_id']].copy()
         tnotinboxunique = pd.merge(
@@ -109,7 +110,7 @@ def main():
             status1,
             how='left',
             on='subject_id')
-        status2 = box.getredcapfields(['data_status', 'misscat'], study='hcpa')
+        status2 = redcap.getredcapfields(['data_status', 'misscat'], study='hcpa')
         status2 = status2[['data_status', 'misscat___7', 'subject_id']].copy()
         tnotinboxunique = pd.merge(
             tnotinboxunique,
@@ -121,7 +122,7 @@ def main():
                             'misscat'] = tnotinboxunique['misscat___7']
         tnotinboxunique.loc[tnotinboxunique.data_status_x.isnull(
         ), 'data_status_x'] = tnotinboxunique.data_status_y
-        status3 = box.getredcapfields(
+        status3 = redcap.getredcapfields(
             ['data_status', 'misscat'], study='hcpd18')
         status3 = status3[['data_status', 'subject_id', 'misscat___9']].copy()
         tnotinboxunique = pd.merge(

@@ -9,6 +9,7 @@ import shutil
 from openpyxl import load_workbook
 import pandas as pd
 import download.box
+from download import redcap
 
 from download.box import LifespanBox
 #from download.box import getredcapids
@@ -129,8 +130,8 @@ RAVLTdb = pd.concat([RAVLTdb, RAVLT2db], axis=0)
 # ass2=asslist.loc[~(asslist.assessment=='RAVLT2'),'assessment']
 ass2 = asslist.assessment
 
-studyids = box.getredcapids()
-studydata = box.getredcapdata()
+studyids = redcap.getredcapids()
+studydata = redcap.getredcapdata()
 
 
 for item in ass2:
@@ -174,14 +175,14 @@ notinboxunique = combonotinbox.drop_duplicates('subject')
 notinboxunique = notinboxunique.loc[notinboxunique.flagged.isnull()]
 # notinboxunique=notinboxunique.loc[notinboxunique.interview_date<'2019-05-01']
 # makes sure records are complete
-status1 = box.getredcapfields(['data_status', 'misscat'], study='hcpdchild')
+status1 = redcap.getredcapfields(['data_status', 'misscat'], study='hcpdchild')
 status1 = status1[['data_status', 'misscat___9', 'subject_id']].copy()
 tnotinboxunique = pd.merge(
     notinboxunique,
     status1,
     how='left',
     on='subject_id')
-status2 = box.getredcapfields(['data_status', 'misscat'], study='hcpa')
+status2 = redcap.getredcapfields(['data_status', 'misscat'], study='hcpa')
 status2 = status2[['data_status', 'misscat___7', 'subject_id']].copy()
 tnotinboxunique = pd.merge(
     tnotinboxunique,
@@ -193,7 +194,7 @@ tnotinboxunique.loc[tnotinboxunique.misscat.isnull(),
                     'misscat'] = tnotinboxunique['misscat___7']
 tnotinboxunique.loc[tnotinboxunique.data_status_x.isnull(),
                     'data_status_x'] = tnotinboxunique.data_status_y
-status3 = box.getredcapfields(['data_status', 'misscat'], study='hcpd18')
+status3 = redcap.getredcapfields(['data_status', 'misscat'], study='hcpd18')
 status3 = status3[['data_status', 'subject_id', 'misscat___9']].copy()
 tnotinboxunique = pd.merge(
     tnotinboxunique.drop(
