@@ -1,8 +1,11 @@
+import io
+
 import pandas as pd
 import pycurl
 import json
 from io import BytesIO
 import numpy as np
+import requests
 
 from config import config
 
@@ -223,6 +226,39 @@ def getredcapfields(self, fieldlist, study):
 
     return studydata
 
+def redcapApi(token, fields=[], events=[],
+    format = 'csv',
+    content = 'record',
+    type = 'flat',
+    returnFormat = 'json',
+    rawOrLabel = 'raw',
+    rawOrLabelHeaders = 'raw',
+    exportCheckboxLabel = 'false',
+    exportSurveyFields = 'false',
+    exportDataAccessGroups = 'false'):
+
+    data = {
+        'token': token,
+        'format': format,
+        'content': content,
+        'type': type,
+        'returnFormat': returnFormat,
+        'rawOrLabel': rawOrLabel,
+        'rawOrLabelHeaders': rawOrLabelHeaders,
+        'exportCheckboxLabel': exportCheckboxLabel,
+        'exportSurveyFields': exportSurveyFields,
+        'exportDataAccessGroups': exportDataAccessGroups,
+    }
+    if fields:
+        data['fields'] = fields
+
+    if events:
+        data['events'] = events
+
+    r = requests.post(redcap_api_url, data=data)
+    return io.BytesIO(r.content)
+
+
 
 def getredcapids(self):
     """
@@ -235,34 +271,12 @@ def getredcapids(self):
     """
     auth = pd.read_csv(redcapconfigfile)
     studyids = pd.DataFrame()
-    for i in range(len(auth.study)):
-        data = {
-            'token': auth.token[i],
-            'content': 'record',
-            'format': 'csv',
-            'type': 'flat',
-            'fields[0]': auth.field[i],
-            'events[0]': auth.event[i],
-            'rawOrLabel': 'raw',
-            'rawOrLabelHeaders': 'raw',
-            'exportCheckboxLabel': 'false',
-            'exportSurveyFields': 'false',
-            'exportDataAccessGroups': 'false',
-            'returnFormat': 'json'}
-        buf = BytesIO()
-        ch = pycurl.Curl()
-        ch.setopt(
-            ch.URL,
-            redcap_api_url)
-        ch.setopt(ch.HTTPPOST, list(data.items()))
-        ch.setopt(ch.WRITEDATA, buf)
-        ch.perform()
-        ch.close()
-        htmlString = buf.getvalue().decode('UTF-8')
-        buf.close()
-        parent_ids = pd.DataFrame(
-            htmlString.splitlines(),
-            columns=['Subject_ID'])
+
+    for z in auth.to_dict(orient='records'):
+        r = redcapApi(z['token'], fields= [z['field']], events= [z['event']])
+
+        df = pd.read_csv(r, encoding='utf8', header=['Subject_ID'])
+        df.columns = 'Subject_ID'
         parent_ids = parent_ids.iloc[1:, ]
         parent_ids = parent_ids.loc[~(parent_ids.Subject_ID == '')]
         uniqueids = pd.DataFrame(
@@ -272,7 +286,7 @@ def getredcapids(self):
         new = uniqueids['Subject_ID'].str.split("_", 1, expand=True)
         uniqueids['subject'] = new[0].str.strip()
         uniqueids['flagged'] = new[1].str.strip()
-        uniqueids['study'] = auth.study[i]
+        uniqueids['study'] = z['study']
         studyids = studyids.append(uniqueids)
     return studyids
 

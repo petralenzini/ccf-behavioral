@@ -39,6 +39,7 @@ import shutil
 from openpyxl import load_workbook
 import pandas as pd
 import download.box
+from download import redcap
 
 from download.box import LifespanBox
 
@@ -62,7 +63,7 @@ except BaseException:
 # prep basic redcap data ####################3
 # need this so sites and studies can be assigned to curated data rows (if missing).
 # Data cant be split by sites unless this info included somehow.
-moredata = box.getfullredcapdata()
+moredata = redcap.getfullredcapdata()
 # set these vars to missing because they belong to child of parent and could conflict
 # (different QC pgrograms look for this type of inconsistency between REDCap Databases)
 moredata.loc[moredata.study == 'hcpdparent', 'gender'] = ''
