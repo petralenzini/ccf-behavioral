@@ -226,17 +226,17 @@ def getredcapfields(self, fieldlist, study):
 
     return studydata
 
-def redcapApi(token, fields=[], events=[],
-    format = 'csv',
-    content = 'record',
-    type = 'flat',
-    returnFormat = 'json',
-    rawOrLabel = 'raw',
-    rawOrLabelHeaders = 'raw',
-    exportCheckboxLabel = 'false',
-    exportSurveyFields = 'false',
-    exportDataAccessGroups = 'false'):
 
+def redcapApi(token, fields=[], events=[],
+              format='csv',
+              content='record',
+              type='flat',
+              returnFormat='json',
+              rawOrLabel='raw',
+              rawOrLabelHeaders='raw',
+              exportCheckboxLabel='false',
+              exportSurveyFields='false',
+              exportDataAccessGroups='false'):
     data = {
         'token': token,
         'format': format,
@@ -259,7 +259,6 @@ def redcapApi(token, fields=[], events=[],
     return io.BytesIO(r.content)
 
 
-
 def getredcapids(self):
     """
     Downloads field (IDS) in Redcap databases specified by details in redcapconfig file
@@ -273,7 +272,7 @@ def getredcapids(self):
     studyids = pd.DataFrame()
 
     for z in auth.to_dict(orient='records'):
-        r = redcapApi(z['token'], fields= [z['field']], events= [z['event']])
+        r = redcapApi(z['token'], fields=[z['field']], events=[z['event']])
 
         df = pd.read_csv(r, encoding='utf8', header=['Subject_ID'])
         df.columns = 'Subject_ID'
