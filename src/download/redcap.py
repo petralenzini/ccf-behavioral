@@ -12,7 +12,8 @@ from config import config
 redcapconfigfile = config['redcap']['config']
 redcap_api_url = config['redcap']['api_url']
 
-def getredcapdata(self):
+
+def getredcapdata(self, fulldata=False):
     """
     Downloads required fields for all nda structures from Redcap databases specified by details in redcapconfig file
     Returns panda dataframe with fields 'study', 'Subject_ID, 'subject', and 'flagged', where 'Subject_ID' is the
@@ -20,116 +21,46 @@ def getredcapdata(self):
     subject is this same id stripped of underscores or flags like 'excluded' to make it easier to merge
     flagged contains the extra characters other than the id so you can keep track of who should NOT be uploaded to NDA
      or elsewwhere shared
+
+    Args:
+        fulldata (bool): Should parents be included
     """
     auth = pd.read_csv(redcapconfigfile)
     studydata = pd.DataFrame()
-    # skip 1st row of auth which holds parent info
-    for i in range(1, len(auth.study)):
-        data = {
-            'token': auth.token[i],
-            'content': 'record',
-            'format': 'csv',
-            'type': 'flat',
-            'fields[0]': auth.field[i],
-            'fields[1]': auth.interview_date[i],
-            'fields[2]': auth.sexatbirth[i],
-            'fields[3]': auth.sitenum[i],
-            'fields[4]': auth.dobvar[i],
-            'events[0]': auth.event[i],
-            'rawOrLabel': 'raw',
-            'rawOrLabelHeaders': 'raw',
-            'exportCheckboxLabel': 'false',
-            'exportSurveyFields': 'false',
-            'exportDataAccessGroups': 'false',
-            'returnFormat': 'json'}
-        buf = BytesIO()
-        ch = pycurl.Curl()
-        ch.setopt(
-            ch.URL,
-            redcap_api_url)
-        ch.setopt(ch.HTTPPOST, list(data.items()))
-        ch.setopt(ch.WRITEDATA, buf)
-        ch.perform()
-        ch.close()
-        htmlString = buf.getvalue().decode('UTF-8')
-        buf.close()
-        parent_ids = pd.DataFrame(htmlString.splitlines(), columns=['row'])
-        header = parent_ids.iloc[0]
-        headerv2 = header.str.replace(
-            auth.interview_date[i], 'interview_date')
-        headerv3 = headerv2.str.split(',')
-        parent_ids.drop([0], inplace=True)
-        pexpanded = pd.DataFrame(
-            parent_ids.row.str.split(
-                pat=',').values.tolist(),
-            columns=headerv3.values.tolist()[0])
-        pexpanded = pexpanded.loc[~(pexpanded.subject_id == '')]
-        new = pexpanded['subject_id'].str.split("_", 1, expand=True)
-        pexpanded['subject'] = new[0].str.strip()
-        pexpanded['flagged'] = new[1].str.strip()
-        pexpanded['study'] = auth.study[i]
-        studydata = pd.concat([studydata, pexpanded], axis=0, sort=True)
-    return studydata
 
-def getfullredcapdata(self):  # , including parents
-    """
-    Downloads required fields for all nda structures from Redcap databases specified by details in redcapconfig file
-    Returns panda dataframe with fields 'study', 'Subject_ID, 'subject', and 'flagged', where 'Subject_ID' is the
-    patient id in the database of interest (sometimes called subject_id, parent_id).
-    subject is this same id stripped of underscores or flags like 'excluded' to make it easier to merge
-    flagged contains the extra characters other than the id so you can keep track of who should NOT be uploaded to NDA
-     or elsewwhere shared
-    """
-    auth = pd.read_csv(redcapconfigfile)
-    studydata = pd.DataFrame()
-    # DONT skip 1st row of auth which holds parent info
-    for i in range(0, len(auth.study)):
-        data = {
-            'token': auth.token[i],
-            'content': 'record',
-            'format': 'csv',
-            'type': 'flat',
-            'fields[0]': auth.field[i],
-            'fields[1]': auth.interview_date[i],
-            'fields[2]': auth.sexatbirth[i],
-            'fields[3]': auth.sitenum[i],
-            'fields[4]': auth.dobvar[i],
-            'events[0]': auth.event[i],
-            'rawOrLabel': 'raw',
-            'rawOrLabelHeaders': 'raw',
-            'exportCheckboxLabel': 'false',
-            'exportSurveyFields': 'false',
-            'exportDataAccessGroups': 'false',
-            'returnFormat': 'json'}
-        buf = BytesIO()
-        ch = pycurl.Curl()
-        ch.setopt(
-            ch.URL,
-            redcap_api_url)
-        ch.setopt(ch.HTTPPOST, list(data.items()))
-        ch.setopt(ch.WRITEDATA, buf)
-        ch.perform()
-        ch.close()
-        htmlString = buf.getvalue().decode('UTF-8')
-        buf.close()
-        parent_ids = pd.DataFrame(htmlString.splitlines(), columns=['row'])
-        header = parent_ids.iloc[0]
-        headerv2 = header.str.replace(
-            auth.interview_date[i], 'interview_date')
-        headerv3 = headerv2.str.split(',')
-        parent_ids.drop([0], inplace=True)
-        pexpanded = pd.DataFrame(
-            parent_ids.row.str.split(
-                pat=',').values.tolist(),
-            columns=headerv3.values.tolist()[0])
-        pexpanded = pexpanded.loc[~(pexpanded[auth.field[i]] == '')]
-        new = pexpanded[auth.field[i]].str.split("_", 1, expand=True)
+    records = auth.to_dict(orient='records')
+    if not fulldata:
+        # skip 1st row of auth which holds parent info
+        records = records[1:]
+    # else don't skip
+
+    for z in records:
+        fields = [
+            z['field'],
+            z['interview_date'],
+            z['sexatbirth'],
+            z['sitenum'],
+            z['dobvar'],
+        ]
+        r = redcapApi(z['token'], fields=fields, events=[z['event']])
+
+        pexpanded = pd.read_csv(r, encoding='utf8')
+        pexpanded.rename(columns={z['interview_date']: 'interview_date'}, inplace=True)
+
+        pexpanded = pexpanded.loc[~(pexpanded[z['field']] == '')]
+        new = pexpanded[z['field']].str.split("_", 1, expand=True)
         pexpanded['subject'] = new[0].str.strip()
         pexpanded['flagged'] = new[1].str.strip()
-        pexpanded['study'] = auth.study[i]
+        pexpanded['study'] = z['study']
+
         studydata = pd.concat([studydata, pexpanded], axis=0, sort=True)
 
     return studydata
+
+
+def getfullredcapdata(self):
+    return getredcapdata(False)
+
 
 def getredcapfields(self, fieldlist, study):
     """"
@@ -142,67 +73,26 @@ def getredcapfields(self, fieldlist, study):
     """
     auth = pd.read_csv(redcapconfigfile)
     studydata = pd.DataFrame()
-    fieldlistlabel = [
-        'fields[' +
-        str(i) +
-        ']' for i in range(
-            5,
-            len(fieldlist) +
-            5)]
-    fieldrow = dict(zip(fieldlistlabel, fieldlist))
-    d1 = {'token': auth.loc[auth.study == study,
-                            'token'].values[0],
-          'content': 'record',
-          'format': 'csv',
-          'type': 'flat',
-          'fields[0]': auth.loc[auth.study == study,
-                                'field'].values[0],
-          'fields[1]': auth.loc[auth.study == study,
-                                'interview_date'].values[0],
-          'fields[2]': auth.loc[auth.study == study,
-                                'sexatbirth'].values[0],
-          'fields[3]': auth.loc[auth.study == study,
-                                'sitenum'].values[0],
-          'fields[4]': auth.loc[auth.study == study,
-                                'dobvar'].values[0]}
-    d2 = fieldrow
-    d3 = {'events[0]': auth.loc[auth.study == study,
-                                'event'].values[0],
-          'rawOrLabel': 'raw',
-          'rawOrLabelHeaders': 'raw',
-          'exportCheckboxLabel': 'false',
-          'exportSurveyFields': 'false',
-          'exportDataAccessGroups': 'false',
-          'returnFormat': 'json'}
-    data = {**d1, **d2, **d3}
-    buf = BytesIO()
-    ch = pycurl.Curl()
-    ch.setopt(
-        ch.URL,
-        redcap_api_url)
-    ch.setopt(ch.HTTPPOST, list(data.items()))
-    ch.setopt(ch.WRITEDATA, buf)
-    ch.perform()
-    ch.close()
-    htmlString = buf.getvalue().decode('UTF-8')
-    buf.close()
-    parent_ids = pd.DataFrame(htmlString.splitlines(), columns=['row'])
-    header = parent_ids.iloc[0]
-    headerv2 = header.str.replace(
-        auth.loc[auth.study == study, 'interview_date'].values[0], 'interview_date')
-    headerv3 = headerv2.str.split(',')
-    parent_ids.drop([0], inplace=True)
-    pexpanded = pd.DataFrame(
-        parent_ids.row.str.split(
-            pat=',').values.tolist(),
-        columns=headerv3.values.tolist()[0])
-    pexpanded = pexpanded.loc[~(
-            pexpanded[auth.loc[auth.study == study, 'field'].values[0]] == '')]
-    new = pexpanded[auth.loc[auth.study == study,
-                             'field'].values[0]].str.split("_", 1, expand=True)
+    z = auth.set_index('study', drop=False).to_dict('index')
+    z = z[study]
+    fields = [
+        z['field'],
+        z['interview_date'],
+        z['sexatbirth'],
+        z['sitenum'],
+        z['dobvar'],
+    ]
+    fields.extend(fieldlist)
+    r = redcapApi(z['token'], fields=fields, events=[z['event']])
+
+    pexpanded = pd.read_csv(r, encoding='utf8')
+    pexpanded.rename(columns={z['interview_date']: 'interview_date'}, inplace=True)
+
+    pexpanded = pexpanded.loc[~(pexpanded[z['field']] == '')]
+    new = pexpanded[z['field']].str.split("_", 1, expand=True)
     pexpanded['subject'] = new[0].str.strip()
     pexpanded['flagged'] = new[1].str.strip()
-    pexpanded['study'] = study  # auth.study[i]
+    pexpanded['study'] = z['study']
     studydata = pd.concat([studydata, pexpanded], axis=0, sort=True)
     # Convert age in years to age in months
     # note that dob is hardcoded var name here because all redcap databases use same variable name...sue me
