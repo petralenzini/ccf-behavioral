@@ -1,9 +1,10 @@
+PyYAML
 robobrowser
 asn1crypto==0.24.0
 attrs==18.2.0
 boto3==1.9.86
 botocore==1.12.86
-boxsdk==2.3.2
+boxsdk[jwt]==2.3.2
 certifi==2018.11.29
 cffi==1.11.5
 chardet==3.0.4
