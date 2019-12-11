@@ -14,11 +14,12 @@ from download import redcap
 
 from download.box import LifespanBox
 #from download.box import getredcapids
-
+from download.redcap import Redcap
 
 verbose = True
 #verbose = False
 snapshotdate = datetime.datetime.today().strftime('%m_%d_%Y')
+
 
 root_cache = '/data/intradb/tmp/box2nda_cache/'
 cache_space = os.path.join(root_cache, 'eprime')
@@ -37,6 +38,7 @@ except BaseException:
 
 # connect to Box
 box = LifespanBox(cache=cache_space)
+redcap = Redcap('../tmp/.boxApp/redcapconfig.csv')
 
 # snapshot folder (used to be the combined folder)
 e_snapshotfolderid = 82670538107

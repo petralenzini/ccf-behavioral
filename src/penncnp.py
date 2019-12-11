@@ -9,6 +9,9 @@ import pandas as pd
 import numpy as np
 
 from download import redcap
+from download.redcap import Redcap
+
+redcap = Redcap('../tmp/.boxApp/redcapconfig.csv')
 from download.box import LifespanBox
 #from download.box import getredcapids
 

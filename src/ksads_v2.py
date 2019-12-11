@@ -9,8 +9,7 @@ from config import config
 from download import redcap
 
 from download.box import LifespanBox
-
-
+from download.redcap import Redcap
 
 config['root'] = {'cache': '/home/osboxes/PycharmProjects/ccf/tmp/cache/',
                   'store': '/home/osboxes/PycharmProjects/ccf/tmp/store/'}
@@ -32,6 +31,7 @@ if not os.path.exists(store_space):
 
 # connect to Box
 box = LifespanBox(cache=ksads_cache_path, config_file=config['config_files']['box'])
+redcap = Redcap('../tmp/.boxApp/redcapconfig.csv')
 
 # snapshot folder (used to be the combined folder)
 ksads_snapshotfolderid = 48203202724
@@ -41,8 +41,6 @@ snapshotQCfolder = 76434619813
 # all the numbered questions in KSADS
 cachekeyfile = box.downloadFile(506958838440)
 
-# hard coding to prevent read of files that shouldnt be in these folders in box.  cant do a search.
-# WU,UMN,UCLA, and Harvard, respectively, for cleanest start file ids below
 assessments = config['Assessments']
 
 
@@ -55,22 +53,18 @@ def main():
         # then save updated xls files with new date, navigate to file in box and select 'upload new version.'
         # This will allow BOX to track versioning until better system is in place
         site_files = assessments[item]['cleanest_start']
-
-        # Get all rows from all site output files for cleanest files as a
-        # pandas dataframe with column labels
         rows = get_all_rows(site_files)
 
         # create snapshot of combined file (all four sites together) store
         # snapshot in 'store' and in 'snapshots' under all sites directory in
         # box.
-        snap = 'KSADS_' + item + '_Snapshot_' + snapshotdate + '.csv'
-        snapshot_filepath = os.path.join(store_space, snap)  # or in store_space?
+        snap = 'KSADS_%s_Snapshot_%s.csv' % (item, snapshotdate)
+        snapshot_filepath = os.path.join(store_space, snap)
         QC_filepath = os.path.join(ksads_cache_path, 'QC_' + snap)
         dictcsv_filepath = os.path.join(ksads_cache_path, 'Dict_' + snap)
 
-        # write rows to csv in store
+        # write rows to csv in store, then upload to box
         rows.to_csv(snapshot_filepath, index=False)
-        # upload the snapshot into box
         box.upload_file(snapshot_filepath, ksads_snapshotfolderid)
 
         # compare ids from snapshot (currently loaded into 'rows' dataframe)

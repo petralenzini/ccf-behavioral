@@ -13,7 +13,9 @@ from download import redcap
 
 from download.box import LifespanBox
 #from download.box import getredcapids
+from download.redcap import Redcap
 
+redcap = Redcap('../tmp/.boxApp/redcapconfig.csv')
 
 verbose = True
 #verbose = False
