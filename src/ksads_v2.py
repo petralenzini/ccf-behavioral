@@ -1,8 +1,5 @@
 import os
 import datetime
-import csv
-import shutil
-from openpyxl import load_workbook
 import pandas as pd
 import numpy as np
 from config import config
@@ -96,7 +93,7 @@ def main():
         notinboxunique = notinboxunique.loc[notinboxunique.flagged.isnull()]
         notinboxunique = notinboxunique.loc[notinboxunique.interview_date < '2019-05-01']
         notinboxunique = notinboxunique.loc[~(
-            notinboxunique.study == 'hcpa')].copy()
+                notinboxunique.study == 'hcpa')].copy()
         notinboxunique['reason'] = 'Missing in Box'
 
         dups = combowredcap.loc[combowredcap.duplicated(
@@ -127,65 +124,7 @@ def main():
         makedatadictv2(snapshot_filepath, dictcsv_filepath, inst)
         box.upload_file(dictcsv_filepath, ksads_snapshotfolderid)
     # Clean up cache space
-    shutil.rmtree(box.cache)
-
-
-# screen=finddups(527416597176) #screener snapshot
-# duplicatedScreener = screen.loc[screen.duplicated(subset=['PatientID','PatientType'],keep=False)]
-# suppl=finddups(527424900084)
-# duplicatedSuppl=suppl.loc[suppl.duplicated(subset=['PatientID','PatientType'],keep=False)]
-
-
-def findupdates(base_id=454918321952, compare_id=454298717674):
-    """
-    compare two files by dataset id for updates to other columns
-    """
-    fbase = box.getFileById(base_id)
-    basecachefile = box.downloadFile(base_id)
-    wb_base = load_workbook(filename=basecachefile)
-    basequestionnaire = wb_base[wb_base.sheetnames[0]]
-    fbaseraw = pd.DataFrame(basequestionnaire.values)
-    header = fbaseraw.iloc[0]
-    fbaseraw = fbaseraw[1:]
-    fbaseraw.columns = header
-    # now the file to compare
-    fcompare = box.getFileById(compare_id)
-    comparecachefile = box.downloadFile(compare_id)
-    wb_compare = load_workbook(filename=comparecachefile)
-    comparequestionnaire = wb_compare[wb_compare.sheetnames[0]]
-    fcompareraw = pd.DataFrame(comparequestionnaire.values)
-    header = fcompareraw.iloc[0]
-    fcompareraw = fcompareraw[1:]
-    fcompareraw.columns = header
-    fjoined = pd.merge(fbaseraw, fcompareraw, on='ID', how='inner')
-    # for all columns except the ID, compare...
-    updates = pd.DataFrame()
-    for col in fbaseraw.columns:
-        if col == 'ID':
-            pass
-        else:
-            fjoined.loc[fjoined[str(col) + '_x'] is None] = ""
-            fjoined.loc[fjoined[str(col) + '_y'] is None] = ""
-            update = fjoined.loc[~(
-                fjoined[str(col) + '_x'] == fjoined[str(col) + '_y'])].copy()
-            if update.empty:
-                pass
-            else:
-                update['column_affected'] = str(col)
-                update['base_value'] = fjoined[str(col) + '_x']
-                update['compare_value'] = fjoined[str(col) + '_y']
-                updates = updates.append(update)
-    updates = updates[['ID', 'PatientID_x', 'SiteName_x',
-                       'column_affected', 'base_value', 'compare_value']].copy()
-    updates.rename(
-        columns={
-            'PatientID_x': 'PatientID_base',
-            'SiteName_x': 'SiteName_base'})
-    updates['basename'] = fbase.get().name
-    updates['comparename'] = fcompare.get().name
-    updates['base_id'] = base_id
-    updates['compare_id'] = compare_id
-    return updates
+    # shutil.rmtree(box.cache)
 
 
 def get_all_rows(sites):
@@ -201,62 +140,6 @@ def get_all_rows(sites):
         dataframes.append(df)
 
     return pd.concat(dataframes)
-
-
-def append_new_data(rows, combined_file):
-    """
-    Add rows for ids that don't exist and upload to Box
-    """
-    # print(rows)
-    print(str(len(rows)) +
-          ' rows found in old or new box files (may contain duplicates)')
-    # combined_file_name = combined_file.get().name
-    combined_file_path = os.path.join(box.cache, combined_file.get().name)
-    # Get existing ids
-    existing_ids = []
-    with open(combined_file_path) as f:
-        for combinedrow in f.readlines():
-            # print(row.split(',')[0])
-            existing_ids.append(str(combinedrow.split(',')[0]))
-    # Get new rows based on id
-    new_rows = []
-    for row in rows:
-        # print('record id: ' + str(row[0]))
-        if str(row[0]) not in existing_ids:
-            new_rows.append(row)
-            # print(combined_file_name)
-            # print('record id: ' + str(row[0]))
-    print(str(len(new_rows)) + ' new rows')
-    if not new_rows:
-        print('Nothing new to add. Exiting Append Method...')
-        return
-    # Write new rows to combined file
-    with open(combined_file_path, 'a') as csvfile:
-        writer = csv.writer(
-            csvfile,
-            delimiter=',',
-            quotechar='"',
-            quoting=csv.QUOTE_MINIMAL
-        )
-        for row in new_rows:
-            writer.writerow(row)
-    # Put the file back in Box as a new version
-    # box.update_file(combined_file_id, combined_file_name)
-    combined_file.update_contents(combined_file_path)
-
-
-def makeslim(storefilename, slim_id):
-    """
-    remove columns from cachecopy that have no data and upload slim file to box
-    """
-    box.downloadFile(slim_id)
-    ksadsraw = pd.read_csv(storefilename, header=0, low_memory=False)
-    ksadsraw = ksadsraw.dropna(axis=1, how='all')
-    snapname = os.path.basename(storefilename)
-    combined_fileout = os.path.join(
-        box.cache, snapname.split('.')[0] + 'Slim.csv')
-    ksadsraw.to_csv(combined_fileout, index=False)
-    return box.update_file(slim_id, combined_fileout)
 
 
 def makedatadictv2(filecsv, dictcsv, inst):
@@ -293,100 +176,12 @@ def makedatadictv2(filecsv, dictcsv, inst):
                       (varvalues.num_nonmissing >= 10), 'values_or_example'] = ''.join(
             str(ksadsraw[var].unique().tolist()))
         varvalues.loc[(varvalues.variable == var) & (varvalues.numunique <= 10) & (
-            varvalues.num_nonmissing < 10), 'values_or_example'] = ksadsraw[var].unique().tolist()[0]
+                varvalues.num_nonmissing < 10), 'values_or_example'] = ksadsraw[var].unique().tolist()[0]
         varvalues.loc[(varvalues.variable == var) & (varvalues.numunique > 10),
                       'values_or_example'] = ksadsraw[var].unique().tolist()[0]
     varvalues['Instrument Title'] = inst
     varvalues.to_csv(dictcsv, index=False)
 
 
-def makedatadict(slimf, dict_id, cachekeyfile, sheet):
-    """
-    create datadictionary from csvfile and upload dictionary to box
-    """
-    try:
-        dictf = box.getFileById(dict_id)
-        box.downloadFile(dict_id)
-    except BaseException:
-        dictf = None
-    cachefile = os.path.join(box.cache, slimf.get().name.split('.')[0])
-    ksadsraw = pd.read_csv(cachefile + '.csv', header=0, low_memory=False)
-    varvalues = pd.DataFrame(
-        columns=[
-            'variable',
-            'values_or_example',
-            'numunique'])
-    varvalues['variable'] = ksadsraw.columns
-    kcounts = ksadsraw.count().reset_index().rename(
-        columns={'index': 'variable', 0: 'num_nonmissing'})
-    varvalues = pd.merge(varvalues, kcounts, on='variable', how='inner')
-    # create a data frame containing summary info of data in the ksadraw, e.g.
-    # variablse, their formats, values, ect.
-    for var in ksadsraw.columns:
-        row = ksadsraw.groupby(var).count().reset_index()[var]
-        varvalues.loc[varvalues.variable == var, 'numunique'] = len(
-            row)  # number of unique vars in this column
-        varvalues.loc[(varvalues.variable == var) & (varvalues.numunique <= 10) &
-                      (varvalues.num_nonmissing >= 10), 'values_or_example'] = ''.join(
-            str(ksadsraw[var].unique().tolist()))
-        varvalues.loc[(varvalues.variable == var) & (varvalues.numunique <= 10) & (
-            varvalues.num_nonmissing < 10), 'values_or_example'] = ksadsraw[var].unique().tolist()[1]
-        varvalues.loc[(varvalues.variable == var) & (varvalues.numunique > 10),
-                      'values_or_example'] = ksadsraw[var].unique().tolist()[1]
-    # capture labels for the vars in this assessment from the key
-    keyasrow = pd.read_excel(cachekeyfile, sheet_name=sheet, header=0)
-    varlabels = keyasrow.transpose().reset_index().rename(
-        columns={'index': 'variable', 0: 'question_label'})
-    varlabels['variable'] = varlabels['variable'].apply(str)
-    # now merge labels for the informative variables from cache
-    varvalues2 = pd.merge(varvalues, varlabels, on='variable', how='left')
-    varvalues2 = varvalues2[['variable',
-                             'question_label',
-                             'values_or_example',
-                             'numunique',
-                             'num_nonmissing']].copy()
-    # push this back to box
-    fileoutdict = os.path.join(ksads_cache_path, cachefile + "_DataDictionary.csv")
-    varvalues2.to_csv(fileoutdict, index=False)
-    if dictf is None:
-        box.upload_file(fileoutdict, str(ksadscombinedfolderid))
-    else:
-        box.update_file(dict_id, fileoutdict)
-
-
 if __name__ == '__main__':
     main()
-
-
-def share_ksads(
-        snapshot=snapshotdate,
-        specialstring='_20190813_LS_datarequest',
-        boxoutdir=84470235182):
-    """
-    put in date of snapshot you're useing to create export...e.g. 08_15_2019  #remember all snapshots are copied to store space so no need to grab from BOX
-    """
-    for item in assessments:
-        # create snapshot of combined file (all four sites together) store
-        # snapshot in 'store' and in 'snapshots' under all sites directory in
-        # box.
-        snap = 'KSADS_' + item + '_Snapshot_' + snapshotdate + '.csv'
-        snapshort = 'KSADS_' + item + '_Snapshot_' + snapshotdate
-        snapshotfile = os.path.join(store_space, snap)
-        rows = pd.read_csv(snapshotfile, header=0, low_memory=False)
-        studyids = redcap.getredcapids()
-        new = rows['PatientID'].str.split("_", 1, expand=True)
-        rows['subject'] = new[0].str.strip()
-        combowredcap = pd.merge(rows, studyids, how='inner', on='subject')
-        combowredcap = combowredcap.loc[combowredcap.PatientID.str.contains(
-            'V1')].copy()
-        # these are the ones that need to be excluded
-        combonotflaggedinredcap = combowredcap.loc[combowredcap.flagged.isnull(
-        )]
-        temporaryfile = os.path.join(
-            ksads_cache_path, snapshort + specialstring + '.csv')
-        combonotflaggedinredcap.to_csv(temporaryfile, index=False)
-        # upload QC file to box
-        box.upload_file(temporaryfile, boxoutdir)
-
-    # Clean up cache space
-    shutil.rmtree(box.cache)
