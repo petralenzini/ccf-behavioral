@@ -1,3 +1,4 @@
+#!/usr/bin/python3
 import argparse
 import os
 import datetime
@@ -72,6 +73,11 @@ def main():
 
             b.columns = b.columns.astype(str)
             k.columns = k.columns.astype(str)
+            b.ID = b.ID.astype(int)
+            k.ID = k.ID.astype(int)
+
+            b = b.sort_values('ID').reset_index(drop=True)
+            k = k.sort_values('ID').reset_index(drop=True)
 
             # find last row in b[ox]
             # find matching index location in k[sads] version
