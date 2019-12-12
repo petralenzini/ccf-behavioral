@@ -182,12 +182,16 @@ class LifespanBox:
         print(file)
         return file
 
-    def update_file(self, file_id, file_path):
+    def update_file(self, file_id, file_path, rename=True):
         """
         Upload a new version of an existing file by file_id
         """
-        file = self.client.file(str(file_id)).update_contents(file_path)
-        return file
+        base = os.path.basename(file_path)
+        file = self.client.file(str(file_id))
+        if rename and file.get().name != base:
+            file.rename(base)
+
+        return file.update_contents(file_path)
 
     @staticmethod
     def _match(string, pattern):
