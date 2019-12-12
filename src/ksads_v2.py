@@ -80,6 +80,7 @@ def main():
         # these are the ids that need to be checked by the sites
         combonotinredcap = combowredcap.loc[combowredcap.Subject_ID.isnull()].copy()
         combonotinredcap['reason'] = 'PatientID not in Redcap'
+        combonotinredcap['site'] = combonotinredcap.SiteName
         # combonotinredcap[['ID','PatientID','PatientType','SiteName','reason']].to_csv(QC_filepath,index=False)
 
         combowredcap2 = pd.merge(
