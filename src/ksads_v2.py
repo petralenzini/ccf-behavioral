@@ -113,8 +113,7 @@ def main():
 
         # just keep these in mind for time being
         # these are the ids that need to be
-        comboflaggedinredcap = combowredcap.loc[combowredcap.flagged.isnull(
-        ) == False]
+        comboflaggedinredcap = combowredcap.loc[combowredcap.flagged.notnull()]
         # excluded before any data is shared...make note.
 
         # NDA release will be based on an explicitly named snapshot...not just whatever is in the rows right now - but the following files will
