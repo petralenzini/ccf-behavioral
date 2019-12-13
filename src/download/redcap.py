@@ -131,7 +131,6 @@ class Redcap:
             df = redcapApi(z['token'], fields=[z['field']], events=[z['event']])
             df.columns = ['Subject_ID']
             parent_ids = df
-            parent_ids = parent_ids.iloc[1:, ]
             parent_ids = parent_ids.loc[~(parent_ids.Subject_ID == '')]
             uniqueids = pd.DataFrame(
                 parent_ids.Subject_ID.unique(),
