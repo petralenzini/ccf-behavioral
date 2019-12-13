@@ -133,12 +133,14 @@ class LifespanBox:
 
     def downloadFile(self, fileId, downloadDir=None, override=False):
         downloadDir = downloadDir or self.cache
-        mode = "wb+" if override else "wb"
 
         file = self.getFileById(fileId)
         path = os.path.join(downloadDir, file.get().name)
 
-        with open(path, mode) as fd:
+        if os.path.exists(path) and not override:
+            return path
+
+        with open(path, "wb+") as fd:
             fd.write(file.content())
 
         return path
