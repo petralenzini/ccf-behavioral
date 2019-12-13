@@ -1,3 +1,12 @@
+dirs:
+  cache:
+    root: '/home/osboxes/PycharmProjects/ccf/tmp/cache/'
+    ksads: ksads
+  store:
+    root: '/home/osboxes/PycharmProjects/ccf/tmp/store/'
+    ksads: ksads
+box: '/home/osboxes/PycharmProjects/ccf/tmp/.boxApp/config.json'
+
 root:
   cache: '/data/intradb/tmp/box2nda_cache/'
   store: '/home/shared/HCP/hcpinternal/ccf-nda-behavioral/store/'
@@ -5,10 +14,12 @@ config_files:
   box: /home/shared/HCP/hcpinternal/ccf-nda-behavioral/store/.boxApp/config.json
 redcap:
   api_url: https://redcap.wustl.edu/redcap/srvrs/prod_v3_1_0_001/redcap/api/
-  config: /home/shared/HCP/hcpinternal/ccf-nda-behavioral/store/.boxApp/redcapconfig.csv
+  config: ../tmp/.boxApp/redcapconfig.csv
+#  config: /home/shared/HCP/hcpinternal/ccf-nda-behavioral/store/.boxApp/redcapconfig.csv
 ksads_snapshotfolderid: 48203202724
 snapshotQCfolder: 76434619813
 keyfileid: 265126641029
+cachekeyfile: 506958838440
 Summaries:
   Intro:
     dict_id: 450219939565

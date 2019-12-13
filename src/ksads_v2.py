@@ -15,30 +15,24 @@ config['config_files']['box'] = '/home/osboxes/PycharmProjects/ccf/tmp/.boxApp/c
 # verbose = False
 verbose = True
 snapshotdate = datetime.datetime.today().strftime('%m_%d_%Y')
-root_cache = config['root']['cache']
-ksads_cache_path = os.path.join(root_cache, 'ksads')
-if not os.path.exists(ksads_cache_path):
-    os.mkdir(ksads_cache_path)
-
-root_store = config['root']['store']
+ksads_cache_path = config['dirs']['cache']['ksads']
 # this will be the place to save any snapshots on the nrg servers
-store_space = os.path.join(root_store, 'ksads')
-if not os.path.exists(store_space):
-    os.mkdir(store_space)
+store_space = config['dirs']['store']['ksads']
 
 # connect to Box
-box = LifespanBox(cache=ksads_cache_path, config_file=config['config_files']['box'])
-redcap = Redcap('../tmp/.boxApp/redcapconfig.csv')
+box = LifespanBox(cache=ksads_cache_path, config_file=config['box'])
+redcap = Redcap(config['redcap']['config'])
+assessments = config['Assessments']
+sites = config['Sites']
+# verbose = False
 
 # snapshot folder (used to be the combined folder)
-ksads_snapshotfolderid = 48203202724
-snapshotQCfolder = 76434619813
+ksads_snapshotfolderid = config['ksads_snapshotfolderid']
+snapshotQCfolder = config['snapshotQCfolder']
 
 # download one of the identical key files which contain the labels for
 # all the numbered questions in KSADS
-cachekeyfile = box.downloadFile(506958838440)
-
-assessments = config['Assessments']
+cachekeyfile = box.downloadFile(config['cachekeyfile'])
 
 
 def main():
