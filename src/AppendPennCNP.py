@@ -19,7 +19,7 @@ ksads_cache_path = config['dirs']['cache']['ksads']
 
 # connect to Box
 box = LifespanBox(cache=ksads_cache_path, config_file=config['box'])
-site_file = config['PennCNP']
+site_file = config['PennCNP']['snapshot']
 
 
 

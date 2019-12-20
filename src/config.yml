@@ -1,9 +1,11 @@
 dirs:
   cache:
     root: '/home/osboxes/PycharmProjects/ccf/tmp/cache/'
+    penncnp: penncnp
     ksads: ksads
   store:
     root: '/home/osboxes/PycharmProjects/ccf/tmp/store/'
+    penncnp: penncnp
     ksads: ksads
 box: '/home/osboxes/PycharmProjects/ccf/tmp/.boxApp/config.json'
 
@@ -17,10 +19,14 @@ redcap:
   config: ../tmp/.boxApp/redcapconfig.csv
 #  config: /home/shared/HCP/hcpinternal/ccf-nda-behavioral/store/.boxApp/redcapconfig.csv
 ksads_snapshotfolderid: 48203202724
+penn_snapshotfolderid:  48203214504
 snapshotQCfolder: 76434619813
 keyfileid: 265126641029
 cachekeyfile: 506958838440
-PennCNP: 452784840845
+PennCNP:
+  slim: 460781218444
+  dict: 460884641280
+  snapshot: 452784840845
 Summaries:
   Intro:
     dict_id: 450219939565
