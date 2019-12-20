@@ -1,4 +1,5 @@
 #!/usr/bin/python3
+
 import argparse
 import os
 import datetime
@@ -8,21 +9,17 @@ import pandas as pd
 from config import config
 
 from download.box import LifespanBox
+from download.pennCNP import PennCNP
 from download.redcap import Redcap
-from download.ksads import KSADS
 
 # verbose = False
 verbose = True
 snapshotdate = datetime.datetime.today().strftime('%m_%d_%Y')
 ksads_cache_path = config['dirs']['cache']['ksads']
-# this will be the place to save any snapshots on the nrg servers
-store_space = config['dirs']['store']['ksads']
 
 # connect to Box
 box = LifespanBox(cache=ksads_cache_path, config_file=config['box'])
-redcap = Redcap(config['redcap']['config'])
-assessments = config['Assessments']
-sites = config['Sites']
+site_file = config['PennCNP']
 
 
 
@@ -46,47 +43,51 @@ def main():
 
     user = user.strip()
     password = password.strip()
-    ksads = KSADS(user, password, cache='./cache/')
+    cnp = PennCNP(user, password, cache='./cache/').get()
+    box_path = box.downloadFile(site_file)
+    boxdf = pd.read_excel(box_path)
+    combined = append(boxdf, cnp)
 
 
-    for site, values in sites.items():
-        for assessment_type in ['Intro', 'Screener', 'Supplement']:
-            # read the files into b, k
-            ksads_path = ksads.download_file(values['ksads.net'], assessment_type.lower())
-            site_file = values[assessment_type]
-            box_path = box.downloadFile(site_file)
+    date = datetime.datetime.today().strftime('%Y%b%d')
+    combined_path = os.path.join(
+        './merged/',
+        'HCA-HCD_AllSites_CNP_%s.xlsx' % (date)
+    )
+    combined.to_excel(combined_path, index=False)
+    box.update_file(site_file, combined_path)
 
-            b = pd.read_excel(box_path)
-            k = pd.read_excel(ksads_path)
+def append(old_df, new_df, colname=None):
+    # if not specified, use the first column name
+    if not colname:
+        colname = old_df.columns[0]
 
-            b.columns = b.columns.astype(str)
-            k.columns = k.columns.astype(str)
-            b.ID = b.ID.astype(int)
-            k.ID = k.ID.astype(int)
+    # make sure any int columns are converted to str
+    old_df.columns = old_df.columns.astype(str)
+    new_df.columns = new_df.columns.astype(str)
 
-            b = b.sort_values('ID').reset_index(drop=True)
-            k = k.sort_values('ID').reset_index(drop=True)
+    sort_col = colname + '_sorted'
+    # if multiple IDs are specified extract only the first one, and convert to int
+    old_df[sort_col] = old_df[colname].astype(str).str.extract('^(\d+)').astype(int)
+    new_df[sort_col] = new_df[colname].astype(str).str.extract('^(\d+)').astype(int)
 
-            # find last row in b[ox]
-            # find matching index location in k[sads] version
-            last_row_id = b.iloc[-1].ID
-            match_idx = k[k.ID == last_row_id].index[0]
+    old_df = old_df.sort_values(sort_col).reset_index(drop=True)
+    new_df = new_df.sort_values(sort_col).reset_index(drop=True)
 
-            # append missing rows from k onto b
-            # but since using an additional -5 as buffer,
-            # need to remove the duplicates
-            additional_rows = k.iloc[match_idx - 5:]
-            combined = pd.concat([b, additional_rows], sort=False)
-            combined.drop_duplicates('ID', inplace=True)
+    # find last row in b[ox]
+    # find matching index location in k[sads] version
+    last_row_id = old_df.iloc[-1][sort_col]
+    match_idx = new_df[new_df[sort_col] == last_row_id].index[0]
 
-            # save to file, upload
-            date = datetime.datetime.today().strftime('%Y%b%d')
-            combined_path = os.path.join(
-                './merged/',
-                '%s %s %s.xlsx' % (site, assessment_type, date)
-            )
-            combined.to_excel(combined_path, index=False)
-            box.update_file(site_file, combined_path)
+    # append missing rows from k onto b
+    # but since using an additional -5 as buffer,
+    # need to remove the duplicates
+    additional_rows = new_df.iloc[match_idx - 5:]
+    combined = pd.concat([old_df, additional_rows], sort=False)
+    combined.drop_duplicates(sort_col, inplace=True)
+    combined.drop(columns=sort_col, inplace=True)
+
+    return combined
 
 
 if __name__ == '__main__':
