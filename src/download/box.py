@@ -190,10 +190,12 @@ class LifespanBox:
         """
         base = os.path.basename(file_path)
         file = self.client.file(str(file_id))
+        f = file.update_contents(file_path)
+
         if rename and file.get().name != base:
             file.rename(base)
 
-        return file.update_contents(file_path)
+        return f
 
     @staticmethod
     def _match(string, pattern):
