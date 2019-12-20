@@ -13,7 +13,6 @@ from download.redcap import Redcap
 
 redcap = Redcap('../tmp/.boxApp/redcapconfig.csv')
 from download.box import LifespanBox
-#from download.box import getredcapids
 
 
 verbose = True
@@ -235,56 +234,6 @@ def main():
     shutil.rmtree(box.cache)
 
 
-def findupdates(base_id=454918321952, compare_id=454298717674):
-    """
-    compare two files by dataset id for updates to other columns
-    """
-    fbase = box.getFileById(base_id)
-    basecachefile = box.downloadFile(base_id)
-    wb_base = load_workbook(filename=basecachefile)
-    basequestionnaire = wb_base[wb_base.sheetnames[0]]
-    fbaseraw = pd.DataFrame(basequestionnaire.values)
-    header = fbaseraw.iloc[0]
-    fbaseraw = fbaseraw[1:]
-    fbaseraw.columns = header
-    # now the file to compare
-    fcompare = box.getFileById(compare_id)
-    comparecachefile = box.downloadFile(compare_id)
-    wb_compare = load_workbook(filename=comparecachefile)
-    comparequestionnaire = wb_compare[wb_compare.sheetnames[0]]
-    fcompareraw = pd.DataFrame(comparequestionnaire.values)
-    header = fcompareraw.iloc[0]
-    fcompareraw = fcompareraw[1:]
-    fcompareraw.columns = header
-    fjoined = pd.merge(fbaseraw, fcompareraw, on='ID', how='inner')
-    # for all columns except the ID, compare...
-    updates = pd.DataFrame()
-    for col in fbaseraw.columns:
-        if col == 'ID':
-            pass
-        else:
-            fjoined.loc[fjoined[str(col) + '_x'] is None] = ""
-            fjoined.loc[fjoined[str(col) + '_y'] is None] = ""
-            update = fjoined.loc[~(
-                fjoined[str(col) + '_x'] == fjoined[str(col) + '_y'])].copy()
-            if update.empty:
-                pass
-            else:
-                update['column_affected'] = str(col)
-                update['base_value'] = fjoined[str(col) + '_x']
-                update['compare_value'] = fjoined[str(col) + '_y']
-                updates = updates.append(update)
-    updates = updates[['ID', 'PatientID_x', 'SiteName_x',
-                       'column_affected', 'base_value', 'compare_value']].copy()
-    updates.rename(
-        columns={
-            'PatientID_x': 'PatientID_base',
-            'SiteName_x': 'SiteName_base'})
-    updates['basename'] = fbase.get().name
-    updates['comparename'] = fcompare.get().name
-    updates['base_id'] = base_id
-    updates['compare_id'] = compare_id
-    return updates
 
 
 def get_all_rows(sites):
@@ -316,47 +265,6 @@ def get_all_rows(sites):
     return rowsasdf
 
 
-def append_new_data(rows, combined_file):
-    """
-    Add rows for ids that don't exist and upload to Box
-    """
-    # print(rows)
-    print(str(len(rows)) +
-          ' rows found in old or new box files (may contain duplicates)')
-    # combined_file_name = combined_file.get().name
-    combined_file_path = os.path.join(box.cache, combined_file.get().name)
-    # Get existing ids
-    existing_ids = []
-    with open(combined_file_path) as f:
-        for combinedrow in f.readlines():
-            # print(row.split(',')[0])
-            existing_ids.append(str(combinedrow.split(',')[0]))
-    # Get new rows based on id
-    new_rows = []
-    for row in rows:
-        # print('record id: ' + str(row[0]))
-        if str(row[0]) not in existing_ids:
-            new_rows.append(row)
-            # print(combined_file_name)
-            # print('record id: ' + str(row[0]))
-    print(str(len(new_rows)) + ' new rows')
-    if not new_rows:
-        print('Nothing new to add. Exiting Append Method...')
-        return
-    # Write new rows to combined file
-    with open(combined_file_path, 'a') as csvfile:
-        writer = csv.writer(
-            csvfile,
-            delimiter=',',
-            quotechar='"',
-            quoting=csv.QUOTE_MINIMAL
-        )
-        for row in new_rows:
-            writer.writerow(row)
-    # Put the file back in Box as a new version
-    # box.update_file(combined_file_id, combined_file_name)
-    combined_file.update_contents(combined_file_path)
-
 
 def makeslim(storefilename, slim_id):
     """
@@ -375,72 +283,6 @@ def makeslim(storefilename, slim_id):
     return slimf
 
 
-def makedatadict(
-        slimf,
-        dict_id=None,
-        cachekeyfile=None,
-        sheet=None,
-        folderout=None):
-    """
-    create datadictionary from csvfile and upload dictionary to box
-    """
-    try:
-        box.downloadFile(dict_id)
-        dictf = box.getFileById(dict_id)
-    except BaseException:
-        dictf = None
-    cachefile = os.path.join(box.cache, slimf.get().name.split('.')[0])
-    ksadsraw = pd.read_csv(cachefile + '.csv', header=0, low_memory=False)
-    varvalues = pd.DataFrame(
-        columns=[
-            'variable',
-            'values_or_example',
-            'numunique'])
-    varvalues['variable'] = ksadsraw.columns
-    varvalues['type'] = ksadsraw.dtypes.reset_index()[0]
-    kcounts = ksadsraw.count().reset_index().rename(
-        columns={'index': 'variable', 0: 'num_nonmissing'})
-    varvalues = pd.merge(varvalues, kcounts, on='variable', how='inner')
-    # create a data frame containing summary info of data in the ksadraw, e.g.
-    # variablse, their formats, values, ect.
-    for var in ksadsraw.columns:
-        row = ksadsraw.groupby(var).count().reset_index()[var]
-        varvalues.loc[varvalues.variable == var, 'numunique'] = len(
-            row)  # number of unique vars in this column
-        varvalues.loc[(varvalues.variable == var) & (varvalues.numunique <= 10) & (
-            varvalues.num_nonmissing >= 10), 'values_or_example'] = ''.join(str(ksadsraw[var].unique().tolist()))
-        try:
-            varvalues.loc[(varvalues.variable == var) & (varvalues.numunique <= 10) & (
-                varvalues.num_nonmissing < 10), 'values_or_example'] = ksadsraw[var].unique().tolist()[1]
-        except BaseException:
-            pass
-        try:
-            varvalues.loc[(varvalues.variable == var) & (
-                varvalues.numunique > 10), 'values_or_example'] = ksadsraw[var].unique().tolist()[1]
-        except BaseException:
-            pass
-    # capture labels for the vars in this assessment from the key
-    if cachekeyfile:
-        keyasrow = pd.read_excel(cachekeyfile, sheet_name=sheet, header=0)
-        varlabels = keyasrow.transpose().reset_index().rename(
-            columns={'index': 'variable', 0: 'question_label'})
-        varlabels['variable'] = varlabels['variable'].apply(str)
-        # now merge labels for the informative variables from cache
-        varvalues2 = pd.merge(varvalues, varlabels, on='variable', how='left')
-        varvalues2 = varvalues2[['variable',
-                                 'question_label',
-                                 'values_or_example',
-                                 'numunique',
-                                 'num_nonmissing']].copy()
-    else:
-        varvalues2 = varvalues.copy()
-    # push this back to box
-    fileoutdict = os.path.join(cache_space, cachefile + "_DataDictionary.csv")
-    varvalues2.to_csv(fileoutdict, index=False)
-    if dictf is None:
-        box.upload_file(fileoutdict, str(folderout))
-    else:
-        box.update_file(dict_id, fileoutdict)
 
 
 if __name__ == '__main__':
