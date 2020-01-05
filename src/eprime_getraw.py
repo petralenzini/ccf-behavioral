@@ -3,14 +3,14 @@
 # this 'download' is then saved to store space and to box raw folder under
 # snapshots
 
-import os
 import datetime
-import sys
+import os
 import shutil
 
 import pandas as pd
 
 from download.box import LifespanBox
+
 verbose = True
 snapshotdate = datetime.datetime.today().strftime('%m_%d_%Y')
 root_cache = '/data/intradb/tmp/box2nda_cache/'

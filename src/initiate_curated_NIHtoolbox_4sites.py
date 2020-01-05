@@ -30,17 +30,14 @@
 # I.e. NO -- cat endpointmachine/lifespan/*Assessment\ Scores.csv_* | grep
 # -v PIN > endpointmachine/AssessmentScores.csv
 
+import datetime
 ##########################################################################
 ####initiate data that is required for both scores and raw data types#####
 import os
-import datetime
-import sys
-import shutil
-from openpyxl import load_workbook
-import pandas as pd
-import download.box
-from download import redcap
 
+import pandas as pd
+
+from download import redcap
 from download.box import LifespanBox
 
 verbose = True

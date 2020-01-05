@@ -1,19 +1,11 @@
-import os
 import datetime
-from pandas import ExcelWriter
-from pandas import ExcelFile
-import csv
-import pycurl
-import sys
+import os
 import shutil
-from openpyxl import load_workbook
+
 import pandas as pd
-import numpy as np
-import download.box
-from download import redcap
 
 from download.box import LifespanBox
-#from download.box import getredcapids
+# from download.box import getredcapids
 from download.redcap import Redcap
 
 verbose = True

@@ -3,9 +3,8 @@
 # this 'download' is then saved to store space and to box raw folder under
 # snapshots
 
-import os
 import datetime
-import sys
+import os
 import shutil
 
 import pandas as pd
