@@ -17,6 +17,8 @@ config_files:
 redcap:
   api_url: https://redcap.wustl.edu/redcap/srvrs/prod_v3_1_0_001/redcap/api/
   config: ../creds/RedcapConfig.csv
+KSADS:
+  credentials: ../creds/KSADS.yml
 ksads_snapshotfolderid: 48203202724
 penn_snapshotfolderid:  48203214504
 snapshotQCfolder: 76434619813
