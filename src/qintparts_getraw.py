@@ -1,3 +1,5 @@
+#!/usr/bin/env python3
+
 # this program just gathers all of the raw Q-interactive data from Box and generates a copy of this data (as a single data frame of filenames, box location, file_ids, the row of data, assessment type...etc)
 # think of its output like a 'download' of everything newly saved to BOX.
 # this 'download' is then saved to store space and to box raw folder under
