@@ -25,6 +25,7 @@ snapshotQCfolder: 76434619813
 keyfileid: 265126641029
 cachekeyfile: 506958838440
 PennCNP:
+  credentials: ../creds/PennCNP.yml
   slim: 460781218444
   dict: 460884641280
   snapshot: 452784840845

@@ -1,6 +1,5 @@
 #!/usr/bin/env python3
 
-
 import os
 import datetime
 import pandas as pd
@@ -11,11 +10,6 @@ from download import redcap
 from download.box import LifespanBox
 from download.redcap import Redcap
 
-config['root'] = {'cache': '/home/osboxes/PycharmProjects/ccf/tmp/cache/',
-                  'store': '/home/osboxes/PycharmProjects/ccf/tmp/store/'}
-config['config_files']['box'] = '/home/osboxes/PycharmProjects/ccf/tmp/.boxApp/config.json'
-
-# verbose = False
 verbose = True
 snapshotdate = datetime.datetime.today().strftime('%m_%d_%Y')
 ksads_cache_path = config['dirs']['cache']['ksads']

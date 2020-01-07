@@ -8,7 +8,7 @@ import os
 from robobrowser import RoboBrowser
 
 def main():
-    parser = argparse.ArgumentParser(description="Downloads the data from KSADS.net")
+    parser = argparse.ArgumentParser(description="Downloads the data from PennCNP")
     user_group = parser.add_mutually_exclusive_group(required=True)
     user_group.add_argument("-u", "--user", type=str, help="username")
     user_group.add_argument("-U", "--userexec", metavar="EXEC", type=str, help="run command to get username")

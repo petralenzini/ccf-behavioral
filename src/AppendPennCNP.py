@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 
+import yaml
 import argparse
 import os
 import datetime
@@ -22,13 +23,20 @@ box = LifespanBox(cache=ksads_cache_path, config_file=config['box'])
 site_file = config['PennCNP']['snapshot']
 
 
+def loadYaml(filename):
+    if not os.path.exists(filename):
+        return None
+
+    with open(filename, 'r') as fd:
+        return yaml.load(fd, Loader=yaml.SafeLoader)
+
 
 def main():
-    parser = argparse.ArgumentParser(description="Downloads the data from KSADS.net")
-    user_group = parser.add_mutually_exclusive_group(required=True)
+    parser = argparse.ArgumentParser(description="Downloads the data from PennCNP")
+    user_group = parser.add_mutually_exclusive_group()
     user_group.add_argument("-u", "--user", type=str, help="username")
     user_group.add_argument("-U", "--userexec", metavar="EXEC", type=str, help="run command to get username")
-    password_group = parser.add_mutually_exclusive_group(required=True)
+    password_group = parser.add_mutually_exclusive_group()
     password_group.add_argument("-p", "--password", type=str, help="password")
     password_group.add_argument("-P", "--passwordexec", metavar="EXEC", type=str, help="run command to get password")
 
@@ -40,6 +48,15 @@ def main():
     password = subprocess.check_output(args.passwordexec, shell=True).decode() \
         if args.passwordexec else \
         args.password
+
+    creds = loadYaml(config['PennCNP']['credentials'])
+
+    if not user:
+        user = creds['user']
+
+    if not password:
+        password = creds['password']
+
 
     user = user.strip()
     password = password.strip()

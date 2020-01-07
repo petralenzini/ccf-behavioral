@@ -8,9 +8,7 @@ from config import config
 from download.redcap import Redcap
 from download.box import LifespanBox
 
-redcap = Redcap('../tmp/.boxApp/redcapconfig.csv')
-
-
+redcap = Redcap()
 verbose = True
 snapshotdate = datetime.datetime.today().strftime('%m_%d_%Y')
 
