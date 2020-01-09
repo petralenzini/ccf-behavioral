@@ -8,54 +8,38 @@
 import datetime
 import os
 import shutil
-from config import config
+
 import pandas as pd
 
+from config import config
 from download.box import LifespanBox
+
+# %%
 
 verbose = True
 snapshotdate = datetime.datetime.today().strftime('%m_%d_%Y')
 cache_space = config['dirs']['cache']['qint']
 store_space = config['dirs']['store']['qint']
 
-
-processed_filename = os.path.join(store_space,
-                              'ProcessedBoxFiles_AllRawData_Qinteractive.csv')
+processed_filename = os.path.join(store_space, 'ProcessedBoxFiles_AllRawData_Qinteractive.csv')
 available_box_files = os.path.join(cache_space, 'AllBoxFiles_Qinteractive.csv')
 
-# generate the box object which contains the necessary client config to
-# talks to box, and sets up the cache space
 box = LifespanBox(cache=cache_space)
 
-# this section will
-# necessary to search folders with
-# generate list of all files in Q directories and identify those that dont
-# follow pattern
-sitefolderslabels = [
-    "WUHCD",
-    "WUHCA",
-    "UMNHCD",
-    "UMNHCA",
-    "UCLAHCD",
-    "UCLAHCA",
-    "HARVHCD",
-    "MGHHCA"]  # ,"UMNHCASUB"]
-sitefolderlist = [
-    18446355408,
-    18446433567,
-    18446318727,
-    18446298983,
-    18446352116,
-    18446404271,
-    18446321439,
-    18446404071]  # ,47239506949]
-# this is a subfolder within UMN HCA that has more Q data in individual
-# subject folders
-specialfolder = 47239506949
-# this is subfolder with rescored data from late July, 2019
-specialfolder2 = 83367512058
-speciallabel = "UMNHCASUB"
+sites = {
+    18446355408: 'WUHCD',
+    18446433567: 'WUHCA',
+    18446318727: 'UMNHCD',
+    18446298983: 'UMNHCA',
+    18446352116: 'UCLAHCD',
+    18446404271: 'UCLAHCA',
+    18446321439: 'HARVHCD',
+    18446404071: 'MGHHCA',
+    #    47239506949: 'UMNHCASUB'
+}
 
+
+# %%
 
 def findasstype(subset, search_string='RAVLT'):
     found = []
@@ -76,47 +60,7 @@ def findasstype(subset, search_string='RAVLT'):
     return nf, fnd
 
 
-def folderlistcontents(folderslabels, folderslist):
-    bdasfilelist = pd.DataFrame()
-    bdasfolderlist = pd.DataFrame()
-    for i in range(len(folderslist)):
-        print(
-            'getting file and folder contents of box folder ' +
-            folderslabels[i])
-        # foldercontents generates two dfs: a df with names and ids of files
-        # and a df with names and ids of folders
-        subfiles, subfolders = foldercontents(folderslist[i])
-        bdasfilelist = bdasfilelist.append(subfiles)
-        bdasfolderlist = bdasfolderlist.append(subfolders)
-    return bdasfilelist, bdasfolderlist
-
-
-def foldercontents(folder_id):
-    filelist = []
-    fileidlist = []
-    folderlist = []
-    folderidlist = []
-    WUlist = box.client.folder(
-        folder_id=folder_id).get_items(
-        limit=None,
-        offset=0,
-        marker=None,
-        use_marker=False,
-        sort=None,
-        direction=None,
-        fields=None)
-    for item in WUlist:
-        if item.type == 'file':
-            filelist.append(item.name)
-            fileidlist.append(item.id)
-        if item.type == 'folder':
-            folderlist.append(item.name)
-            folderidlist.append(item.id)
-    files = pd.DataFrame({'filename': filelist, 'file_id': fileidlist})
-    folders = pd.DataFrame(
-        {'foldername': folderlist, 'folder_id': folderidlist})
-    return files, folders
-
+# %%
 
 def create_row(cachepath, filename, assessment):
     """
@@ -171,119 +115,72 @@ def create_row(cachepath, filename, assessment):
     return new_row, new_label
 
 
+# %%
+
+def getfiles(folders, recursively=True):
+    result = {}
+
+    for folder_id, label in folders.items():
+
+        print('getting filenames of box folder ' + label)
+        items = list(box.client.folder(folder_id).get_items())
+        files = {i.id: i.name for i in items if i.type == 'file'}
+        folders = {i.id: i.name for i in items if i.type == 'folder'}
+
+        result.update(files)
+        if recursively:
+            result.update(getfiles(folders, True))
+
+    return result
+
+
 def main():
-    # get folder contents for all the sites including the known subfolder of individuals folders
-    # folderlistcontents generates two dfs: a df with names and ids of files
-    # and a df with names and ids of folders
-    superfilelist, superfolderlist = folderlistcontents(
-        sitefolderslabels, sitefolderlist)  # 2378 files and 1 folders as of 5/22/2019
-    superfolderlist.reset_index(inplace=True)
-    if (superfolderlist.shape[0] == 2) & (superfolderlist.folder_id[0] == str(
-            specialfolder2)) & (superfolderlist.folder_id[1] == str(specialfolder)):
-        print(
-            'found expected subfolders ',
-            superfolderlist.folder_id[0] +
-            ' and ' +
-            str(specialfolder2))
-    else:
-        print('well, hello, new folders whose contents may or may not be captured')
-        superfolderlist
-    # superfilelist,superfolderlist=folderlistcontents(sitefolderslabels,sitefolderlist)  #2378 files and 1 folders as of 5/22/2019
-    # if (superfolderlist.shape[0]==1) & (superfolderlist.folder_id[0]==str(specialfolder)):
-    #    print('found expected subfolder ',superfolderlist.folder_id[0])
-    # else:
-    #    print('well, hello, new folders whose contents may or may not be captured')
-    #    superfolderlist
+    # %%
 
-    # known subfolder contents -reps Cindy's initial download to UMN site
-    # folder - special folder has list of other  individual folder_ids, and 2
-    # files...grab them
-    # grabbing df of names and id of subfolders in specialfolder
-    specialsubfilelist, specialsubfolderlist = foldercontents(specialfolder)
-    superfilelist = superfilelist.append(
-        specialsubfilelist)  # there were two extra files here
-    # now get foldercontents
-    specialsuperfilelist, specialsuperfolderlist = folderlistcontents(
-        specialsubfolderlist.foldername, specialsubfolderlist.folder_id)
-    # add the subfolder files to list of files that should be processed
-    superfilelist = superfilelist.append(
-        specialsuperfilelist)  # now have 2678 (may 22)
-
-    # specialsuperfolderlist has two more folders that we didnt know about
-    # before running this excercise - if future runs of this code identify any
-    # more, we will be informed here
-    if (
-            specialsuperfolderlist.shape[0] == 2) & (
-            specialsuperfolderlist.reset_index().folder_id[0] == '43861663941') & (
-            specialsuperfolderlist.reset_index().folder_id[1] == '43241473238'):
-        print('found expected sub-subfolders ', specialsuperfolderlist)
-    else:
-        print(
-            'hello, new folders whose contents may or may not be captured',
-            specialsuperfolderlist)
-
-    # known sub-sub folder contents
-    specialsuperfolderlist.reset_index(inplace=True)
-    subspecialsuperfilelist, subspecialsuperfolderlist = folderlistcontents(
-        specialsuperfolderlist.foldername, specialsuperfolderlist.folder_id)  # 4 more files,no more folders (5/22/2019)
-
-    # add the specialfolder-s subfolder-s two subfolders to the final list of
-    # files that should be processed
-    superfilelist = superfilelist.append(
-        subspecialsuperfilelist)  # 2682 files as of 5/22/19
-
-    # now the files that were added late July, 2019
-    specialcorrectfilelist, specialcorrectfolderlist = foldercontents(
-        specialfolder2)  # grabbing df of names and id of subfolders in specialfolder
-    superfilelist = superfilelist.append(
-        specialcorrectfilelist)  # there were ten extra files here
-
+    files = getfiles(sites)
+    superfilelist = pd.DataFrame(files.items(), columns=['file_id', 'filename'])
     # post processing of dataframe of box-site files...
     superfilelist['source'] = 'box-site'
-    superfilelist['visit'] = ''
-    superfilelist['subject'] = superfilelist.filename.str[:10]
+
     # filenames that dont begin with H wont produce subject ids that begin
     # with H...i.e. they dont follow naming convention.
-    superfilelist.loc[~(superfilelist.subject.str[:1] == 'H')]
+    superfilelist.loc[~(superfilelist.filename.str[:1] == 'H')]
     # one was in the UCLA aging folder (9584097_5_). the other was in box-site
     # folder but checklist said to find data in BDAS --no idea who this is
 
-    ###############now find all the files in the BDAS folders#################
-    flabels = ["BDAS_HCD", "BDAS_HCA"]
-    flist = [75755393630, 75755777913]
-    bdasfilelist, bdasfolderlist = folderlistcontents(
-        flabels, flist)  # 1455 files and 0 folders as of 5/22/2019
+    # %%
 
-    # post processing of dataframe of BDAS files...
+    bdas_folders = {75755393630: 'BDAS_HCD', 75755777913: 'BDAS_HCA'}
+    bdasfiles = getfiles(bdas_folders)
+
+    bdasfilelist = pd.DataFrame(bdasfiles.items(), columns=['file_id', 'filename'])
     bdasfilelist['source'] = 'BDAS'
-    bdasfilelist['visit'] = ''
-    bdasfilelist['subject'] = bdasfilelist.filename.str[:10]
-    # filenames that dont follow norm...just drop .DS_store
-    bdasfilelist.loc[~(bdasfilelist.subject.str[:1] == 'H')]
-    bdasfilelist = bdasfilelist.loc[bdasfilelist.subject.str[:1] == 'H'].copy()
+
+    # %%
 
     # put them together...note that as of 5/22/19, there are 559 HCA, 162 HCD, and 2 others who are only represetned in the folders 1.
     # all other individuals in HCA and HCD have data in multiple places.
     # remove the info files from the list,
     # assign visit, and file type where it can be gleaned from filename
+
+    # %%
+
     allboxfiles = pd.concat([superfilelist, bdasfilelist], axis=0)
-    allboxfiles = allboxfiles.loc[~allboxfiles.filename.str.contains(
-        'information.txt')].copy()
-    allboxfiles = allboxfiles.loc[~allboxfiles.filename.str.contains(
-        '.DS_Store')].copy()
+    allboxfiles = allboxfiles[allboxfiles.filename.str.endswith('.csv')]
+    allboxfiles['subject'] = allboxfiles.filename.str[:10]
+    allboxfiles['visit'] = ''
     allboxfiles.loc[allboxfiles.filename.str.contains('V1'), 'visit'] = 'V1'
     allboxfiles.loc[allboxfiles.filename.str.contains('V2'), 'visit'] = 'V2'
     allboxfiles['assessment'] = ''
-    allboxfiles.loc[allboxfiles.filename.str.contains(
-        'Aging_scores'), 'assessment'] = 'RAVLT'
-    allboxfiles.loc[allboxfiles.filename.str.contains(
-        'RAVLT V2'), 'assessment'] = 'RAVLT2'
-    allboxfiles.loc[(allboxfiles.filename.str.contains('Matrix Reasoning 17') &
-                     allboxfiles.filename.str.contains(' 17', regex=False)), 'assessment'] = 'WAIS'
-    allboxfiles.loc[(allboxfiles.filename.str.contains('Matrix Reasoning') &
-                     allboxfiles.filename.str.contains('6-16', regex=False)), 'assessment'] = 'WISC'
-    allboxfiles.loc[(allboxfiles.filename.str.contains('Matrix Reasoning') &
-                     allboxfiles.filename.str.contains('5_scores', regex=False)), 'assessment'] = 'WPPSI'
+    allboxfiles.head()
+
+    is_IQ = allboxfiles.filename.str.contains('Matrix Reasoning')
+    allboxfiles.loc[(is_IQ & allboxfiles.filename.str.contains(' 17', regex=False)), 'assessment'] = 'WAIS'
+    allboxfiles.loc[(is_IQ & allboxfiles.filename.str.contains('6-16', regex=False)), 'assessment'] = 'WISC'
+    allboxfiles.loc[(is_IQ & allboxfiles.filename.str.contains('5_scores', regex=False)), 'assessment'] = 'WPPSI'
+    allboxfiles.loc[allboxfiles.filename.str.contains('Aging_scores'), 'assessment'] = 'RAVLT'
+    allboxfiles.loc[allboxfiles.filename.str.contains('RAVLT V2'), 'assessment'] = 'RAVLT2'
+
     allboxfiles.file_id = allboxfiles.file_id.astype(int)
     dupfilenames = pd.concat(g for _, g in allboxfiles.groupby(
         "filename") if len(g) > 1)  # with duplicate filenames
