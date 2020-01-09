@@ -3,10 +3,12 @@ dirs:
     root: '../tmp/cache/'
     penncnp: penncnp
     ksads: ksads
+    qint: qint
   store:
     root: '../tmp/store/'
     penncnp: penncnp
     ksads: ksads
+    qint: qint
 box: '../creds/BoxApp.json'
 
 root:

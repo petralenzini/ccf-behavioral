@@ -8,31 +8,18 @@
 import datetime
 import os
 import shutil
-
+from config import config
 import pandas as pd
 
 from download.box import LifespanBox
 
 verbose = True
 snapshotdate = datetime.datetime.today().strftime('%m_%d_%Y')
-root_cache = '/data/intradb/tmp/box2nda_cache/'
-cache_space = os.path.join(root_cache, 'qinteractive')
+cache_space = config['dirs']['cache']['qint']
+store_space = config['dirs']['store']['qint']
 
-try:
-    os.mkdir(cache_space)
-except BaseException:
-    print("cache already exists")
 
-root_store = '/home/shared/HCP/hcpinternal/ccf-nda-behavioral/store/'
-# this will be the place to save any snapshots on the nrg servers
-store_space = os.path.join(root_store, 'qinteractive')
-
-try:
-    os.mkdir(store_space)  # look for store space before creating it here
-except BaseException:
-    print("store already exists")
-
-processed_file = os.path.join(store_space,
+processed_filename = os.path.join(store_space,
                               'ProcessedBoxFiles_AllRawData_Qinteractive.csv')
 available_box_files = os.path.join(cache_space, 'AllBoxFiles_Qinteractive.csv')
 
@@ -104,7 +91,6 @@ def folderlistcontents(folderslabels, folderslist):
     return bdasfilelist, bdasfolderlist
 
 
-
 def foldercontents(folder_id):
     filelist = []
     fileidlist = []
@@ -152,7 +138,7 @@ def create_row(cachepath, filename, assessment):
         section_headers.append('Scoring Type,,Scores\n')
     subject_id = filename[:10]
     # this will have to be furthur cleaned for exceptions that dont have underscore in file name
-    #subject_id = subject_id.split('.csv')[0]
+    # subject_id = subject_id.split('.csv')[0]
     new_row = subject_id
     new_label = 'src_subject_id'
     path = os.path.join(cachepath, filename)
@@ -186,7 +172,6 @@ def create_row(cachepath, filename, assessment):
 
 
 def main():
-
     # get folder contents for all the sites including the known subfolder of individuals folders
     # folderlistcontents generates two dfs: a df with names and ids of files
     # and a df with names and ids of folders
@@ -228,9 +213,9 @@ def main():
     # before running this excercise - if future runs of this code identify any
     # more, we will be informed here
     if (
-        specialsuperfolderlist.shape[0] == 2) & (
+            specialsuperfolderlist.shape[0] == 2) & (
             specialsuperfolderlist.reset_index().folder_id[0] == '43861663941') & (
-                specialsuperfolderlist.reset_index().folder_id[1] == '43241473238'):
+            specialsuperfolderlist.reset_index().folder_id[1] == '43241473238'):
         print('found expected sub-subfolders ', specialsuperfolderlist)
     else:
         print(
@@ -252,7 +237,6 @@ def main():
         specialfolder2)  # grabbing df of names and id of subfolders in specialfolder
     superfilelist = superfilelist.append(
         specialcorrectfilelist)  # there were ten extra files here
-
 
     # post processing of dataframe of box-site files...
     superfilelist['source'] = 'box-site'
@@ -306,7 +290,7 @@ def main():
 
     # compare allboxfiles to list in store of already processed files -- not done yet...
     ######################################
-    processed = pd.read_csv(processed_file)
+    processed = pd.read_csv(processed_filename)
     processed = processed[['file_id', 'raw_processed_date']].copy()
 
     files4process = pd.merge(allboxfiles, processed, on='file_id', how='left')
@@ -370,7 +354,6 @@ def main():
     ###################################################################
     # if files4process isnt empty then proceed with an update otherwise stop here:
 
-
     files4process = files4process.reset_index()
     files4process.drop(columns=['index'], inplace=True)
     # files4process.drop(columns=['level_0'],inplace=True)
@@ -394,19 +377,16 @@ def main():
     # sub4.to_csv(processed_file,index=False) - original initialization of processed file required 'to_csv'
     # cat these to the processed file
 
-    processed = pd.read_csv(processed_file)
+    processed = pd.read_csv(processed_filename)
     newprocessed = pd.concat([processed, files4process], axis=0, sort=True)
-    newprocessed.to_csv(processed_file, index=False)
+    newprocessed.to_csv(processed_filename, index=False)
 
     # this is in the behavioral data/snapshots/Q/raw_allfiles_in_box/ folder...is not the curated BDAS file - just keeping a record of the raw unprocessed download
     # box.upload_file(processed_file,76432368853) first run had to upload file
     # - subsequent runs just update
-    box.update_file(462800613671, processed_file)
+    box.update_file(462800613671, processed_filename)
 
     shutil.rmtree(box.cache)
-
-
-
 
 
 if __name__ == '__main__':
