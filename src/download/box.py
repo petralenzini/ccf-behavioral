@@ -1,4 +1,5 @@
 import os
+import io
 import sys
 from multiprocessing.dummy import Pool
 import pandas as pd
@@ -130,6 +131,11 @@ class LifespanBox:
 
     def getFileById(self, fileId):
         return self.client.file(file_id=str(fileId))
+
+    def readFile(self, fileId):
+        """Bypasses the local filesystem, returns an inmemory file handle"""
+        file = self.getFileById(fileId)
+        return io.BytesIO(file.content())
 
     def downloadFile(self, fileId, downloadDir=None, override=False):
         downloadDir = downloadDir or self.cache
