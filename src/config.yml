@@ -21,6 +21,19 @@ redcap:
   config: ../creds/RedcapConfig.csv
 KSADS:
   credentials: ../creds/KSADS.yml
+  nomenclature:
+    date: '%Y-%m-%d'
+    download_dir: ./cache/raw_ksads/
+    download_file: '{date}/{form}/{site}.xlsx'
+  siteids:
+    Harvard: 37
+    Minn: 38
+    UCLA: 36
+    WashU: 34
+  forms:
+    - intro
+    - screener
+    - supplement
 ksads_snapshotfolderid: 48203202724
 penn_snapshotfolderid:  48203214504
 snapshotQCfolder: 76434619813
@@ -49,22 +62,18 @@ Sites:
     Intro: 317203291349
     Screener: 317204091034
     Supplement: 317203382109
-    ksads.net: 34
   Minn:
     Intro: 317226607001
     Screener: 317230106899
     Supplement: 317226471328
-    ksads.net: 38
   UCLA:
     Intro: 317224169848
     Screener: 317224489061
     Supplement: 317224494224
-    ksads.net: 36
   Harvard:
     Intro: 317223373321
     Screener: 317216055920
     Supplement: 317222199440
-    ksads.net: 37
 Assessments:
   Intro:
     cleanest_start:
