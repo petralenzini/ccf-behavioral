@@ -77,7 +77,6 @@ superfilelist['subject'] = superfilelist.filename.str[:10]
 superfilelist.loc[~(superfilelist.subject.str[:1] == 'H')]
 
 
-# allboxfiles=pd.concat([superfilelist,bdasfilelist],axis=0)
 allboxfiles = superfilelist
 allboxfiles.loc[allboxfiles.filename.str.contains('V1'), 'visit'] = 'V1'
 allboxfiles.loc[allboxfiles.filename.str.contains('V2'), 'visit'] = 'V2'
@@ -172,25 +171,6 @@ box.update_file(495494179106, processed_file)
 shutil.rmtree(box.cache)
 
 
-def findasstype(subset, search_string='RAVLT'):
-    found = []
-    notfound = []
-    for f in subset.filename:
-        absfile = os.path.join(cache_space, f)
-        try:
-            for line in open(absfile, encoding='utf-16'):
-                if search_string in line:
-                    found.append(f)
-        except BaseException:
-            notfound.append(f)
-    nf = pd.DataFrame(notfound, columns=['filename'])
-    nf = pd.DataFrame(nf.filename.unique(), columns=['filename'])
-    fnd = pd.DataFrame(found, columns=['filename'])
-    fnd = pd.DataFrame(fnd.filename.unique(), columns=['filename'])
-    fnd['assessment'] = search_string
-    return nf, fnd
-
-
 def folderlistcontents(folderslabels, folderslist):
     bdasfilelist = pd.DataFrame()
     bdasfolderlist = pd.DataFrame()
@@ -233,54 +213,3 @@ def foldercontents(folder_id):
     return files, folders
 
 
-def create_row(cachepath, filename, assessment):
-    """
-    Generates a single row per subject for a given output.
-    Look for unique rows in the file that indicate data points,
-    then capture subsequent rows from file until a newline.
-    """
-    section_headers = [
-        'Subtest,,Raw score\n',
-        'Subtest,,Scaled score\n',
-        'Subtest,Type,Total\n',  # this not in aging or RAVLT
-        'Subtest,,Completion Time (seconds)\n',
-        'Subtest,Type,Yes/No\n',
-        'Item,,Raw score\n',
-        # 'Scoring Type,,Scores\n'
-    ]
-    # Last section header is repeat data except for RAVLT
-    if ('RAVLT' in assessment):
-        section_headers.append('Scoring Type,,Scores\n')
-    subject_id = filename[:10]
-    # this will have to be furthur cleaned for exceptions that dont have underscore in file name
-    #subject_id = subject_id.split('.csv')[0]
-    new_row = subject_id
-    new_label = 'src_subject_id'
-    path = os.path.join(cachepath, filename)
-    capture_flag = False
-    with open(path, encoding='utf-16') as f:
-        for row in f.readlines():
-            #  We know we want the data in the next rows
-            if row in section_headers:
-                capture_flag = True
-                continue
-            # We know a single newline char is the end of a section
-            if row == '\n':
-                capture_flag = False
-                continue
-            if not capture_flag:
-                continue
-            # print(row)
-            value = row.split(',')[-1]
-            label = row.split(',')[-3]
-            # if value == '-':
-            #     value = ''
-            new_row += ',' + value.strip()
-            new_label += ',' + label.strip()
-    # print(new_row)
-    print('Finished processing {}.'.format(filename))
-    # sys.exit()
-    # Save this file to already processed store
-    # with open(processed_file, 'a') as store:
-    #    store.write(filename + '\n')
-    return new_row, new_label
