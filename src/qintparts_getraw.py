@@ -47,10 +47,6 @@ sites = {
     18446404071: 'MGHHCA',
     #    47239506949: 'UMNHCASUB'
 }
-specialfolders = {
-    '47239506949',  # this is a subfolder within UMN HCA that has more Q data in individual
-    '83367512058',  # this is subfolder ('UMNHCASUB') with rescored data from late July, 2019
-}
 bdas_folders = {75755393630: 'BDAS_HCD', 75755777913: 'BDAS_HCA'}
 cleanestdata = '465568117756'
 processfile_id = '462800613671'
@@ -122,8 +118,6 @@ files_df.loc[files_df.filename.str.contains('Aging_scores'), 'assessment'] = 'RA
 files_df.loc[files_df.filename.str.contains('RAVLT V2'), 'assessment'] = 'RAVLT2'
 
 files_df.file_id = files_df.file_id.astype(int)
-dupfilenames = pd.concat(g for _, g in files_df.groupby(
-    "filename") if len(g) > 1)  # with duplicate filenames
 
 # In[11]:
 
@@ -345,10 +339,6 @@ combined.update(e)
 
 
 combined.to_excel(combined_filename, index=False)
-
-# In[268]:
-
-
 box.update_file(cleanestdata, combined_filename)
 
 # In[ ]:
