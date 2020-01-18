@@ -52,10 +52,7 @@ Redcap:
         sitenum: site
 secrets: ../secrets.yml
 KSADS:
-  nomenclature:
-    date: '%Y-%m-%d'
-    download_dir: ./cache/raw_ksads/
-    download_file: '{date}/{form}/{site}.xlsx'
+  download_dir: ./cache/raw_ksads/
   siteids:
     Harvard: 37
     Minn: 38
@@ -134,7 +131,7 @@ Assessments:
     key_sheet: Supplement
     slim_id: 449779011618
 QIntColumns:
-    RAVLT:
+  RAVLT:
     - src_subject_id
     - pea_ravlt_sd_tc
     - delay_scaled
@@ -156,7 +153,7 @@ QIntColumns:
     - delay_recall_intrusion
     - delay_total_intrusion
     - delay_total_repetitions
-    RAVLT2:
+  RAVLT2:
     - src_subject_id
     - pea_ravlt_sd_tc
     - delay_scaled
@@ -178,7 +175,7 @@ QIntColumns:
     - delay_recall_intrusion
     - delay_total_intrusion
     - delay_total_repetitions
-    WAIS:
+  WAIS:
     - src_subject_id
     - scoring_matrixreasoning_raw
     - scoring_matrixreasoning_scaled
@@ -216,7 +213,7 @@ QIntColumns:
     - matrixreasoning_24_score
     - matrixreasoning_25_score
     - matrixreasoning_26_score
-    WISC:
+  WISC:
     - src_subject_id
     - matrixreason_score
     - scaled_matrix
@@ -261,7 +258,7 @@ QIntColumns:
     - matrixreason_item30
     - matrixreason_item31
     - matrixreason_item32
-    WPPSI:
+  WPPSI:
     - src_subject_id
     - wppsi_mxr_rawscre
     - wppsi_mxr_scldscre

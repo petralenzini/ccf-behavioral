@@ -1,14 +1,16 @@
 #!/usr/bin/env python3
 import os
 from datetime import datetime
+from io import BytesIO
+
+import pandas
 from robobrowser import RoboBrowser
 from config import LoadSettings
 
 browser = RoboBrowser(history=True, timeout=6000, parser="lxml")
 
-config = LoadSettings()
-default_cache = './cache/'
-templates = config['KSADS']['nomenclature']
+config = LoadSettings()['KSADS']
+download_dir = config['download_dir']
 
 def main():
     login()
@@ -34,20 +36,7 @@ def login():
 
 
 
-def download(siteid, studytype, name, overwrite=False):
-    # create filename
-    timestamp = datetime.today().strftime(templates['date'])
-    filename = os.path.join(templates['download_dir'], templates['download_file'])
-    filename = filename.format(date=timestamp, site=name, form=studytype)
-    filename = os.path.abspath(filename)
-    os.makedirs(os.path.dirname(filename), exist_ok=True)
-
-
-    if not overwrite and os.path.exists(filename):
-        print('File already exists, skipping  %s'%(filename))
-        return filename
-
-
+def download(siteid, studytype, name):
     # submit the report "type"
     print('Requesting "%s" from "%s"' % (studytype, name))
     browser.open('https://ksads.net/Report/OverallReport.aspx')
@@ -65,12 +54,9 @@ def download(siteid, studytype, name, overwrite=False):
     # save results to file
     if browser.response.ok:
         content = browser.response.content
-        if content:
-            print('Saving ' + filename)
-            with open(filename, "wb+") as fd:
-                fd.write(content)
-
-            return filename
+        return pandas.read_excel(BytesIO(content),  parse_dates=['DateofInterview'], infer_datetime_format=True)
+    else:
+        pandas.DataFrame()
 
 
 def download_all():
@@ -84,10 +70,26 @@ def download_all():
     files = []
 
     # go through ever iteration of study site/type
-    for form in studytypes:
+    for studytype in studytypes:
+        dfs = []
         for name, siteid in config['siteids'].items():
-            filename = download(siteid, form, name)
-            files.append(filename)
+            dfs.append(download(siteid, studytype, name))
+
+        timestamp = datetime.today().strftime('%Y-%m-%d')
+
+        filename = os.path.join(download_dir, '{date}/{type}.csv')
+        filename = filename.format(date=timestamp, type=studytype)
+        filename = os.path.abspath(filename)
+        os.makedirs(os.path.dirname(filename), exist_ok=True)
+        files.append(filename)
+
+        df = pandas.concat(dfs, sort=False).sort_values(['DateofInterview', 'ID'])
+
+        df.columns = ['ksads' + label if isnumeric else label.lower() \
+                      for label, isnumeric in zip(df.columns, df.columns.str.isnumeric())]
+
+        df.to_csv(filename, index=False)
+        print('Saving file %s' % filename)
 
     return files
 
