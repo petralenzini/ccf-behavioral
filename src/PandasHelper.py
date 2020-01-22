@@ -1,3 +1,4 @@
+from IPython.core.display import display, HTML
 from collections.abc import Iterable
 from pandas import DataFrame, Series
 import numpy
@@ -111,3 +112,17 @@ def intersection_both(left, right, on=None, left_columns=None, right_columns=Non
     result = left_df.append(right_df, sort=False).sort_values(left_data.columns.to_list())
 
     return result.drop_duplicates(neg, keep=False) if drop_duplicates else result
+
+
+def showbox(message, heading=None, type='success'):
+    box = '<div class="alert alert-%s" role="alert">' % type
+    if heading:
+        box += '<h4 class="alert-heading">%s</h4>' % heading
+    box += '<p>%s</p></div>' % message
+    return display(HTML(box))
+
+
+def showdataframe(df):
+    if not df.empty:
+        print('Size: r%s x c%s' % df.shape)
+        display(df[:3])
