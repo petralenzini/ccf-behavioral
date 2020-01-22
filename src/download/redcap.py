@@ -50,7 +50,7 @@ class Redcap:
 
         r = requests.post(self.url, data=data)
         r = io.BytesIO(r.content)
-        return pd.read_csv(r, encoding='utf8', parse_dates=True)
+        return pd.read_csv(r, encoding='utf8', parse_dates=True, low_memory=False)
 
     def get_all_rows(self, study, fieldlist=[], subjectOnly=False):
         s = red[study]
