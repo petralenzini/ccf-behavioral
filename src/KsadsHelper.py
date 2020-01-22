@@ -1,13 +1,34 @@
+from config import LoadSettings
+import os
+import pandas as pd
 import PandasHelper as h
 
 
 
 class KSADS:
     def __init__(self):
-        pass
+        config = LoadSettings()
+        self.downloads_dir = config['KSADS']['download_dir']
+        self.dates = sorted(os.listdir(self.downloads_dir))
+
+        self.olddate = self.dates[-2]
+        self.newdate = self.dates[-1]
+
 
     def read_data(self, form):
-        pass
+        old = pd.read_csv(os.path.join(self.downloads_dir, self.olddate, form + '.csv'), low_memory=False)
+        new = pd.read_csv(os.path.join(self.downloads_dir, self.newdate, form + '.csv'), low_memory=False)
+
+        deleted = h.difference(old, new, 'id')
+        modified = h.intersection_both(old, new, 'id', sources=['old', 'new'])
+        added = h.difference(new, old, 'id')
+
+        # display dialogues
+        self.warn_deleted(deleted, form)
+        self.warn_modified(form, modified)
+        self.warn_good_import(added, deleted, form, modified)
+
+        return {'raw': new, 'added': added, 'deleted': deleted, 'modified': modified}
 
     @staticmethod
     def warn_good_import(added, deleted, form, modified):
