@@ -169,6 +169,14 @@ class LifespanBox:
         file = self.getFileById(fileId)
         return io.BytesIO(file.content())
 
+    def read_text(self, fileId):
+        f = self.getFileById(fileId).content()
+
+        try:
+            return f.decode('UTF-16')
+        except UnicodeDecodeError:
+            return f.decode('UTF-8')
+
     def downloadFile(self, fileId, downloadDir=None, override=False):
         downloadDir = downloadDir or self.cache
 
