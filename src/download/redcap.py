@@ -11,22 +11,44 @@ red = config['tables']
 default_url = config['api_url']
 
 
+class RedcapTable:
+    def __init__(self, url, token):
+        self.url = url
+        self.token = token
+
+    @staticmethod
+    def get_table_by_name(name):
+        if name not in config['datasources']:
+            raise Exception(name + ' is not available.')
+
+        ds = config['datasources'][name]
+        return RedcapTable(ds['url'], ds['token'])
+
+    def post(self, payload):
+        data = payload.copy()
+        data['token'] = self.token
+        r = requests.post(self.url, data)
+        return r
+
 
 
 class Redcap:
     def __init__(self, url=default_url):
         self.url = url
 
-    def redcapApi(self, token, fields=[], events=[], forms=[],
-                  format='csv',
-                  content='record',
-                  type='flat',
-                  returnFormat='json',
-                  rawOrLabel='raw',
-                  rawOrLabelHeaders='raw',
-                  exportCheckboxLabel='false',
-                  exportSurveyFields='false',
-                  exportDataAccessGroups='false'):
+    def table(self, token):
+        return RedcapTable(self.url, token)
+
+    def get(self, token, fields=[], events=[], forms=[],
+            format='csv',
+            content='record',
+            type='flat',
+            returnFormat='json',
+            rawOrLabel='raw',
+            rawOrLabelHeaders='raw',
+            exportCheckboxLabel='false',
+            exportSurveyFields='false',
+            exportDataAccessGroups='false'):
         data = {
             'token': token,
             'format': format,
@@ -63,7 +85,7 @@ class Redcap:
             fields = list(fieldnames.values())
         fields.extend(fieldlist)
 
-        df = self.redcapApi(token, fields, events)
+        df = self.get(token, fields, events)
         df.rename(columns={fieldnames['interview_date']: 'interview_date'}, inplace=True)
         df = df[df[fieldnames['field']] != '']
         split_df = df[fieldnames['field']].str.split("_", 1, expand=True)
@@ -145,3 +167,4 @@ class Redcap:
             studyids = studyids.append(df)
 
         return studyids
+
