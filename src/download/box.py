@@ -47,6 +47,36 @@ class LifespanBox:
         )
         return Client(auth)
 
+    def list_of_files(self, folders, extension='.csv', recursively=True):
+        result = {}
+
+        for folder_id in folders:
+
+            f = self.client.folder(folder_id)
+            #print('Scanning %s' % folder_id)
+            print('.', end='')
+            items = list(f.get_items())
+
+            folders = []
+            files = {}
+
+            for i in items:
+                if i.type == 'file':
+                    if i.name.endswith(extension):
+                        files[i.id] = {
+                            'filename': i.name,
+                            'fileid': i.id,
+                            'sha1': i.sha1
+                        }
+                elif i.type == 'folder':
+                    folders.append(i.id)
+
+            result.update(files)
+            if recursively:
+                result.update(self.list_of_files(folders, extension, True))
+
+        return result
+
     def folder_info(self, folder_id):
         f = self.client.folder(folder_id=str(folder_id)).get()
         print('folder owner: ' + f.owned_by['login'])
