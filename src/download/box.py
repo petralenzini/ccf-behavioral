@@ -5,7 +5,9 @@ from multiprocessing.dummy import Pool
 import pandas as pd
 from boxsdk import JWTAuth, OAuth2, Client
 
-from config import config
+from config import LoadSettings
+
+config = LoadSettings()
 
 default_cache = config['root']['cache']
 default_config = config['config_files']['box']
