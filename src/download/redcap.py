@@ -55,6 +55,22 @@ class RedcapTable:
         r = io.BytesIO(r.content)
         return pd.read_csv(r, encoding='utf8', parse_dates=True, low_memory=False)
 
+    def send_frame(self, dataframe, overwrite=True):
+        r = self.post({
+            'content': 'record',
+            'format': 'csv',
+            'type': 'flat',
+            'overwriteBehavior': 'overwrite' if overwrite else 'normal',
+            'data': dataframe.to_csv(index=False),
+            'returnContent': 'ids',
+            'returnFormat': 'json',
+        })
+        return r
+
+    def generate_next_record_ids(self, count=1):
+        n = int(self.post({'content': 'generateNextRecordName'}).content)
+        return list(range(n, n+count))
+
 
 class Redcap:
     def __init__(self, url=default_url):
