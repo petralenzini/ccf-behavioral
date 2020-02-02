@@ -30,6 +30,30 @@ class RedcapTable:
         r = requests.post(self.url, data)
         return r
 
+    def get_frame(self, fields=[], events=[], forms=[]):
+        data = {
+            'format': 'csv',
+            'content': 'record',
+            'type': 'flahot',
+            'returnFormat': 'json',
+            'rawOrLabel': 'raw',
+            'rawOrLabelHeaders': 'raw',
+            'exportCheckboxLabel': 'false',
+            'exportSurveyFields': 'false',
+            'exportDataAccessGroups': 'false',
+        }
+        if fields:
+            data['fields[]'] = fields
+
+        if events:
+            data['events[]'] = events
+
+        if forms:
+            data['forms[]'] = forms
+
+        r = self.post(data)
+        r = io.BytesIO(r.content)
+        return pd.read_csv(r, encoding='utf8', parse_dates=True, low_memory=False)
 
 
 class Redcap:
