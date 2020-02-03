@@ -13,6 +13,13 @@ class Qint:
             box = LifespanBox()
         self.box = box
 
+    def scan_box(self):
+        print('Scanning Folders ', end='')
+        folder_list = config['Qint']['BoxFolders']
+        files = self.box.list_of_files(folder_list)
+        boxfiles = pd.DataFrame(files.values())
+        return boxfiles
+
     @staticmethod
     def detect_assessment(content):
         if 'RAVLT-Alternate' in content:
