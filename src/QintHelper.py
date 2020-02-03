@@ -1,4 +1,5 @@
 from download.box import LifespanBox
+import re
 
 
 class Qint:
@@ -24,25 +25,17 @@ class Qint:
         return assessment
 
     @staticmethod
-    def parse_name(filename):
-        if not filename.endswith('.csv'):
-            return None, None
+    def is_csv(filename):
+        return filename.lower().endswith('.csv')
 
-        subject = filename[:10]
+    @staticmethod
+    def detect_visit(filename):
+        visits = sorted(list(map(int,re.findall('[vV](\d)', filename))))
+        return visits[-1] if visits else None
 
-        filename = filename.upper()
-        if 'V4' in filename:
-            visit = '4'
-        elif 'V3' in filename:
-            visit = '3'
-        elif 'V2' in filename:
-            visit = '2'
-        elif 'V1' in filename:
-            visit = '1'
-        else:
-            visit = None
-
-        return subject, visit
+    @staticmethod
+    def extract_subjectid(filename):
+        return filename[:10]
 
     @staticmethod
     def parse_content(content):
