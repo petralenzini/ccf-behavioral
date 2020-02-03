@@ -126,3 +126,11 @@ def showdataframe(df):
     if not df.empty:
         print('Size: r%s x c%s' % df.shape)
         display(df[:3])
+
+
+def asInt(dfs, *columns):
+    if isinstance(dfs, DataFrame):
+        dfs = [dfs]
+    for df in dfs:
+        for column in columns:
+            df[column] = df[column].astype(float).astype('Int64')
