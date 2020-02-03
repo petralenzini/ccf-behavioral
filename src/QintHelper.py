@@ -1,4 +1,6 @@
 from download.box import LifespanBox
+import pandas as pd
+from numpy import nan
 import re
 
 
@@ -74,55 +76,34 @@ class Qint:
     def csv(content):
         return ','.join(Qint.parse_content(content))
 
-    def get_updates(self, files, preexisting):
-        updates = {}
-        for fileid, v in files.items():
-            fileid = int(fileid)
-            sha1 = v['sha1']
-            name = v['filename']
-            subjectid, visit = self.parse_name(name)
-            current = {
-                'fileid': fileid,
-                'sha1': sha1,
-                'filename': name,
-                'subjectid': subjectid,
-                'visit': visit
-            }
-
-            if fileid in preexisting:
-                pre = preexisting[fileid]
-
-                if sha1 != pre['sha1']:
-                    # update content
-                    print('ReReading', fileid, subjectid, visit)
-                    content = self.box.read_text(fileid)
-                    current['data'] = self.csv(content)
-                    current['assessment'] = self.detect_assessment(content)
-                    current['created'] = self.box.getFileById(fileid).get().content_created_at
-
-                subjectid_old, visit_old = self.parse_name(pre['filename'])
-
-                if subjectid != subjectid_old:
-                    # data now corresponds to different subject_id
-                    # delete from old subject_id
-                    # transfer to new subject_id
-                    current['previous_subjectid'] = subjectid_old
-
-                if visit != visit_old:
-                    # data now corresponds to different subject_id
-                    # delete from old subject_id
-                    # transfer to new subject_id
-                    current['previous_visit'] = visit_old
-
-
+    def get_data(self, files):
+        data = []
+        for fileid in files:
+            print('.', end='')
+            file = self.box.getFileById(fileid).get()
+            content = self.box.read_text(fileid)
+            assessment = self.detect_assessment(content)
+            if assessment == 'RAVLT2':
+                assessment = 'RAVLT'
+                ravlt2 = 1
             else:
-                # download fresh data
-                content = self.box.read_text(fileid)
-                current['data'] = self.csv(content)
-                current['assessment'] = self.detect_assessment(content)
-                current['created'] = self.box.getFileById(fileid).get().content_created_at
+                ravlt2 = 0
 
-            if len(current) > 5:
-                updates[fileid] = current
+            data.append({
+                'fileid': fileid,
+                'assessment': assessment,
+                'ravlt_two': ravlt2,
+                'created': file.content_created_at,
+                'subjectid': self.extract_subjectid(file.name),
+                'visit': self.detect_visit(file.name),
+                'data': self.csv(content),
+                'sha1': file.sha1,
+                'created': file.content_created_at,
+		'filename': file.name
+                })
 
-        return updates
+        df = pd.DataFrame(data)
+        df.ravlt_two = df.ravlt_two.astype('Int64')
+        df.visit = df.visit.astype('Int64')
+        return df.sort_values('created').reset_index(drop=True)
+
