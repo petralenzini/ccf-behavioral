@@ -2,8 +2,11 @@ from download.box import LifespanBox
 import pandas as pd
 from numpy import nan
 import re
+from config import LoadSettings
+config = LoadSettings()
 
 
+columnnames = config['Qint']['Columns']
 class Qint:
     def __init__(self, box=None):
         if box is None:
@@ -106,4 +109,30 @@ class Qint:
         df.ravlt_two = df.ravlt_two.astype('Int64')
         df.visit = df.visit.astype('Int64')
         return df.sort_values('created').reset_index(drop=True)
+
+    def elongate(self, updates):
+        db = {}
+        for item, columns in columnnames.items():
+            x = updates[updates.assessment == item.upper()].reset_index(drop=True)
+            csv = pd.DataFrame(
+                x.data.str.split(',').tolist(),
+                columns=columns
+            )
+
+            x = x[['subjectid', 'fileid', 'filename', 'sha1', 'created','assessment', 'visit', 'ravlt_two']]
+            x = x.merge(csv, 'left', left_index=True, right_index=True)
+            x[item + '_complete'] = 2
+            x[item + '_complete'] = x[item + '_complete'].astype('Int64')
+
+
+            x.visit = x.visit.astype(float).astype('Int64')
+            # fix matrix completion and delay completion times
+            time_field = 'ravlt_delay_completion' if item == 'ravlt' else item.lower()+'_matrix_completion'
+            time_field = x[time_field]
+            # if "null", make NaN
+            time_field.replace('null', nan, inplace=True)
+            # turn durations greater than 1800 to NaN
+            time_field.mask(time_field.astype(float) > 1800, inplace=True)
+            db[item] = x
+        return db
 
