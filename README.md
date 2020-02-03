@@ -1,7 +1,6 @@
-# ccf-nda-behavioral
+# ccf-behavioral
+Tools for cleaning, transforming, and uploading behavioral data from HCP-Lifespan projects into NDA structures
+![](BehavioralDataMovementOverview.jpg)
 
-WashU Lifespan behavioral data manipulation and transfers from Box to NDA.
-
-
-# Usage
+## Usage
 Read the docs for [usage](docs/usage.md) info.
