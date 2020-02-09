@@ -2,7 +2,7 @@ from config import LoadSettings
 import os
 import pandas as pd
 import PandasHelper as h
-
+from download.redcap import Redcap
 
 
 class KSADS:
@@ -14,6 +14,17 @@ class KSADS:
         self.olddate = self.dates[-2]
         self.newdate = self.dates[-1]
 
+        redK = config['Redcap']['datasources']['ksads']
+        self.token = redK['token']
+        self.redcap = Redcap(redK['url'])
+
+    def read_redcap(self, form, added=None):
+        form_complete = '%s_complete' % form
+        redcap_df = self.redcap.get(self.token, forms=['common', form])
+        redcap_df = redcap_df[redcap_df[form_complete] == 1]
+        if added is not None and not added.empty:
+            redcap_df = redcap_df.append(added, sort=False)
+        return redcap_df
 
     def read_data(self, form):
         old = pd.read_csv(os.path.join(self.downloads_dir, self.olddate, form + '.csv'), low_memory=False)
@@ -21,14 +32,18 @@ class KSADS:
 
         deleted = h.difference(old, new, 'id')
         modified = h.intersection_both(old, new, 'id', sources=['old', 'new'])
-        added = h.difference(new, old, 'id')
+        added = h.difference(new, old, 'id').copy()
+        form_complete = '%s_complete' % form
+        added[form_complete] = 1
+        added['common_complete'] = 1
+        merged = self.read_redcap(form, added)
 
         # display dialogues
         self.warn_deleted(deleted, form)
         self.warn_modified(form, modified)
         self.warn_good_import(added, deleted, form, modified)
 
-        return {'raw': new, 'added': added, 'deleted': deleted, 'modified': modified}
+        return {'raw': new, 'added': added, 'deleted': deleted, 'modified': modified, 'merged': merged}
 
     @staticmethod
     def warn_good_import(added, deleted, form, modified):
