@@ -67,6 +67,18 @@ class RedcapTable:
         })
         return r
 
+    def delete_records(self, records):
+        if not isinstance(records, list):
+            records = [records]
+
+        r = self.post({
+            'action': 'delete',
+            'content': 'record',
+            'records[]': records
+        })
+        return r
+
+
     def generate_next_record_ids(self, count=1):
         n = int(self.post({'content': 'generateNextRecordName'}).content)
         return list(range(n, n+count))
