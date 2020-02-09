@@ -32,10 +32,23 @@ def in_common(left, right, on=None, left_columns=None, right_columns=None):
     right_df = __in_common_helper__(right, right_columns, on)
 
     common_columns = left_df.columns.intersection(right_df.columns)
-    return left_df.fillna(MIN_FLOAT)[common_columns], right_df.fillna(MIN_FLOAT)[common_columns]
+    left_df = left_df[common_columns].fillna(MIN_FLOAT)
+    right_df = right_df[common_columns].fillna(MIN_FLOAT)
+
+    return left_df, right_df
 
 
-def difference(left, right, on=None, left_columns=None, right_columns=None):
+def unequal_columns(left, right, on=None, left_columns=None, right_columns=None):
+    left_df = __in_common_helper__(left, left_columns, on)
+    right_df = __in_common_helper__(right, right_columns, on)
+    n = min(len(left_df.columns), len(right_df.columns))
+    left_df = left_df.iloc[:,:n].fillna(MIN_FLOAT)
+    right_df = right_df.iloc[:,:n].fillna(MIN_FLOAT)
+
+    return left_df, right_df
+
+
+def difference(left, right, on=None, left_columns=None, right_columns=None, equal_names=True):
     """
     difference Finds the set difference from left to right DataFrames and returns either a DataFrame or a boolean Series
 
@@ -45,6 +58,7 @@ def difference(left, right, on=None, left_columns=None, right_columns=None):
         on (str|int|Iterable): Column(s) from both datasets to use for operation
         left_columns (str|int|Iterable): Column(s) from left dataset to use for operation
         right_columns (str|int|Iterable): Column(s) from right dataset to use for operation
+        equal_names (bool): Should it automatically try to match intersecting columns, or take the columns in order given as is.
 
     Returns:
         Series: A boolean of the left dataset indicating also in right dataset
@@ -52,7 +66,10 @@ def difference(left, right, on=None, left_columns=None, right_columns=None):
 
     """
 
-    left_data, right_data = in_common(left, right, on, left_columns, right_columns)
+    if equal_names:
+        left_data, right_data = in_common(left, right, on, left_columns, right_columns)
+    else:
+        left_data, right_data = unequal_columns(left, right, on, left_columns, right_columns)
 
     a = set(map(tuple, left_data.values))
     b = set(map(tuple, right_data.values))
