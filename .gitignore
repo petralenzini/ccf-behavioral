@@ -1,2 +1,7 @@
 venv/
 creds/
+secrets.yml
+.ipynb_checkpoints/
+.pytest_cache/
+cache/
+__pycache__/
